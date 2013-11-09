@@ -163,8 +163,8 @@ class puppet::master::bootstrap {
     exec { 'get-development-puppet-class':
         path    => [ '/usr/bin' ],
         cwd     => "${settings::vardir}/sites/default/development/modules",
-        command => 'git clone https://github.com/foolean/puppet-ssh.git ssh',
-        creates => "${settings::vardir}/sites/default/development/modules/ssh",
+        command => 'git clone https://github.com/foolean/puppet-puppet.git puppet',
+        creates => "${settings::vardir}/sites/default/development/modules/puppet",
         require => [
             File["${settings::vardir}/sites/default/development/modules"],
             Package['git'],
@@ -175,8 +175,8 @@ class puppet::master::bootstrap {
     # the default site's production area
     exec { 'get-production-puppet-module':
         path    => [ '/usr/bin', '/bin' ],
-        command => "puppet module install foolean-ssh --modulepath ${settings::vardir}/sites/default/production/modules",
-        creates => "${settings::vardir}/sites/default/production/modules/ssh",
+        command => "puppet module install foolean-puppet --modulepath ${settings::vardir}/sites/default/production/modules",
+        creates => "${settings::vardir}/sites/default/production/modules/puppet",
         require => [
             File["${settings::vardir}/sites/default/production/modules"],
         ],

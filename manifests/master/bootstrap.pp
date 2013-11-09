@@ -60,10 +60,55 @@ class puppet::master::bootstrap {
     # Make sure we understand this operating system
     case $::operatingsystem {
         'debian': {
+            $puppetmaster_packages = [ 'puppetmaster', 'puppetmaster-common' ]
         }
         default: {
             fail("${title} not configured for ${::operatingsystem}, exiting")
         }
+    }
+
+    # Content for the bootstrapped puppet.conf file
+    $puppet_conf = "
+[main]
+    logdir=/var/log/puppet
+    vardir=/var/lib/puppet
+    rundir=/var/run/puppet
+    ssldir=\$vardir/ssl
+    factpath=\$vardir/lib/facter
+
+[agent]
+    environment = production
+    server      = $::fqdn
+    show_diff   = true
+    summarize   = true
+    pluginsync  = true
+    runinterval = 315360000
+
+[master]
+    autosign    = false
+    modulepath  = \$vardir/sites/default/production/modules
+    manifestdir = \$vardir/sites/default/production/manifests
+    manifest    = \$vardir/sites/default/production/manifests/site.pp
+
+[development]
+    modulepath  = \$vardir/sites/default/development/modules
+    manifestdir = \$vardir/sites/default/development/manifests
+    manifest    = \$vardir/sites/default/development/manifests/site.pp
+"
+
+    # Content for the bootstrapped site.pp file
+    $site_pp = "
+node '$::fqdn' {
+    class { 'puppet::master': }
+}
+"
+
+    # Ensure that required packages are installed
+    package { 'git':
+        ensure => 'installed',
+    }
+    package { $puppetmaster_packages:
+        ensure => 'installed',
     }
 
     # Create the top-level sites directory
@@ -155,8 +200,35 @@ class puppet::master::bootstrap {
         require => File["${settings::vardir}/sites/default/production"],
     }
 
-    # Ensure that git is installed
-    package { 'git': ensure => 'installed' }
+    # Bootstrap the puppet.conf file
+    file { '/etc/puppet/puppet.conf':
+        owner   => 'root',
+        group   => 'puppet',
+        mode    => '0640',
+        content => inline_template($puppet_conf),
+    }
+
+    # Bootstrap the production site.pp file
+    file { "${settings::vardir}/sites/default/production/manifests/site.pp":
+        owner   => 'root',
+        group   => 'puppet',
+        mode    => '0640',
+        content => inline_template($site_pp),
+        require => [
+            File["${settings::vardir}/sites/default/production/manifests"],
+        ],
+    }
+
+    # Bootstrap the site.pp file
+    file { "${settings::vardir}/sites/default/production/manifests/site.pp":
+        owner   => 'root',
+        group   => 'puppet',
+        mode    => '0640',
+        content => inline_template($site_pp),
+        require => [
+            File["${settings::vardir}/sites/default/production/manifests"],
+        ],
+    }
 
     # Clone the foolean/puppet-puppet class from github
     # into the default site's development area

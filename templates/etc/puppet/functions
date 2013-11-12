@@ -1,0 +1,604 @@
+<%
+
+require 'resolv'    # For IPv4 and IPv6 address validation
+
+###########################
+# BASIC UTILITY FUNCTIONS #
+###########################
+
+# err_quit - Print error message and fail
+def err_quit(name,text)
+    message = "ERROR: [" + name + "]: "
+    message = message + text
+    scope.function_fail( message )
+end
+
+# do_indent - helper function to add intenting (4 spaces)
+def do_indent(indent)
+    if ( indent ) then
+        return "    "
+    end
+    return ""
+end
+
+# do_integer - Process an integer valueue
+def do_integer(name, option, value, indent=false)
+    if ( value != 0 && value != '0' && value.to_i == 0 ) then
+        err_quit(name, 'inalid ' + option.downcase + '(' + value + '): must be a number' )
+    end
+    return do_indent(indent) + option + " = " + value + "\n"
+end
+
+# array_to_string - convert an array to a delimited string
+def array_to_string(name, array, delimiter)
+    # Just return if we were passed 'false'
+    if ( ! array ) then
+        return
+    end
+
+    # Fail if we don't have an array
+    if ( ! array.kind_of?(Array) ) then
+        err_quit(name, 'array_to_string: must be an array')
+    end
+
+    # Just return if we have an empty array
+    if ( array.length == 0 ) then
+        return
+    end
+
+    delim  = ""
+    string = ""
+
+    # Assemble the cipher list into a comma separated list
+    array.sort.each do |value|
+        string += delim + value
+        delim = delimiter
+    end
+
+    # Return the string
+    return string
+end
+
+# is_valid_ip - return true|false if address is a valid IPv4 or IPv6 address
+def is_valid_ip(address)
+    case address
+        when Resolv::IPv4::Regex
+            return true
+        when Resolv::IPv6::Regex
+            return true
+        else
+            return false
+    end
+end
+
+# do_boolean - Process a boolean value
+# Note: this function permits boolean true, false as well as 'yes', 'no'
+def do_boolean(name, option, value, indent=false)
+    if !!value != value then
+        case value.downcase
+            when "yes" then
+                value = true
+            when "no" then
+                value = false
+            else
+                err_quit(name, 'invalid ' + option.downcase + '(' + value + '): must be a boolean true or false' )
+        end
+    end
+
+    # start with any indenting and the option name
+    result = do_indent(indent) + option
+
+    # add our valueue
+    if value then
+        result = result + " = true\n"
+    else
+        result = result + " = false\n"
+    end
+
+    # return the resulting string
+    return result
+end
+
+# do_text - Process a free-form text value
+def do_text(option, value, indent=false)
+    return do_indent(indent) + option + " = " + value + "\n"
+end
+
+#############################
+# OPTION SPECIFIC FUNCTIONS #
+#############################
+
+# do_autosign - Process the "autosign" option
+def do_autosign(name, value, indent=false)
+    if ( !!value != value ) then
+        return do_indent(indent) + "autosign = " + value + "\n"
+    end
+
+    if value then
+        return do_indent(indent) + "autosign = true\n"
+    else
+        return do_indent(indent) + "autosign = false\n"
+    end
+end
+
+# do_bindaddress - Process the "bindaddress" option
+def do_bindaddress(name, value, indent=false)
+    if ( ! is_valid_ip(value) ) then
+        err_quit(name, 'invalid address (' + value + '): must be IPv4 or IPv6 address' )
+    end
+    return do_indent(indent) + "ListenAddress " + value.downcase + "\n"
+end
+
+# do_color - Process the "color" option
+def do_color(name, value, indent=false)
+    if ( !!value != value ) then
+        if ( value.downcase != 'ansi' && value.downcase != 'html' ) then
+            err_quit(name, 'invalid color (' + value + ')')
+        end
+        return do_indent(indent) + "color = " + value.downcase + "\n"
+    end
+
+    if value then
+        return do_indent(indent) + "color = ansi\n"
+    else
+        return do_indent(indent) + "color = html\n"
+    end
+end
+
+##########################################
+# CONFIGURATION BLOCK SPECIFIC FUNCTIONS #
+##########################################
+
+# process_config_hash - process a hash of puppet configuration options
+def process_config_hash(name, data)
+    tag = "process_config[" + name + "]"
+    result = "[" + name + "]\n"
+    data.sort.map do |option,value|
+        config_line = case option.downcase
+            when 'agent_catalog_run_lockfile' then
+                do_text( option.downcase, value, true )
+            when 'agent_disabled_lockfile' then
+                do_text( option.downcase, value, true )
+            when 'allow_duplicate_certs' then
+                do_boolean( name, option.downcase, value, true )
+            when 'allow_variables_with_dashes' then
+                do_boolean( name, option.downcase, value, true )
+            when 'archive_file_server' then
+                do_text( option.downcase, value, true )
+            when 'archive_files' then
+                do_boolean( name, option.downcase, value, true )
+            when 'async_storeconfigs' then
+                do_boolean( name, option.downcase, value, true )
+            when 'authconfig' then
+                do_text( option.downcase, value, true )
+            when 'autoflush' then
+                do_boolean( name, option.downcase, value, true )
+            when 'autosign' then
+                do_autosign( option.downcase, value, true )
+            when 'bindaddress' then
+                do_bindaddress( name, option.downcase, value, true )
+            when 'bucketdir' then
+                do_text( option.downcase, value, true )
+            when 'ca' then
+                do_boolean( name, option.downcase, value, true )
+            when 'ca_days' then
+                do_integer( name, option.downcase, value, true )
+            when 'ca_md' then
+                do_text( option.downcase, value, true )
+            when 'ca_name' then
+                do_text( option.downcase, value, true )
+            when 'ca_port' then
+                do_integer( name, option.downcase, value, true )
+            when 'ca_server' then
+                do_text( option.downcase, value, true )
+            when 'ca_ttl' then
+                do_text( option.downcase, value, true )
+            when 'cacert' then
+                do_text( option.downcase, value, true )
+            when 'cacrl' then
+                do_text( option.downcase, value, true )
+            when 'cadir' then
+                do_text( option.downcase, value, true )
+            when 'cakey' then
+                do_text( option.downcase, value, true )
+            when 'capass' then
+                do_text( option.downcase, value, true )
+            when 'caprivatedir' then
+                do_text( option.downcase, value, true )
+            when 'capub' then
+                do_text( option.downcase, value, true )
+            when 'catalog_format' then
+                do_text( option.downcase, value, true )
+            when 'catalog_terminus' then
+                do_text( option.downcase, value, true )
+            when 'cert_inventory' then
+                do_text( option.downcase, value, true )
+            when 'certdir' then
+                do_text( option.downcase, value, true )
+            when 'certdnsnames' then
+                do_text( option.downcase, value, true )
+            when 'certificate_revocation' then
+                do_boolean( name, option.downcase, value, true )
+            when 'certname' then
+                do_text( option.downcase, value, true )
+            when 'classfile' then
+                do_text( option.downcase, value, true )
+            when 'client_datadir' then
+                do_text( option.downcase, value, true )
+            when 'clientbucketdir' then
+                do_text( option.downcase, value, true )
+            when 'clientyamldir' then
+                do_text( option.downcase, value, true )
+            when 'code' then
+                do_text( option.downcase, value, true )
+            when 'color' then
+                do_color( option.downcase, value, true )
+            when 'confdir' then
+                do_text( option.downcase, value, true )
+            when 'config' then
+                do_text( option.downcase, value, true )
+            when 'config_version' then
+                do_text( option.downcase, value, true )
+            when 'configprint' then
+                do_text( option.downcase, value, true )
+            when 'configtimeout' then
+                do_integer( name, option.downcase, value, true )
+            when 'couchdb_url' then
+                do_text( option.downcase, value, true )
+            when 'csrdir' then
+                do_text( option.downcase, value, true )
+            when 'daemonize' then
+                do_boolean( name, option.downcase, value, true )
+            when 'dbadapter' then
+                do_text( option.downcase, value, true )
+            when 'dbconnections' then
+                do_integer( name, option.downcase, value, true )
+            when 'dblocation' then
+                do_text( option.downcase, value, true )
+            when 'dbmigrate' then
+                do_boolean( name, option.downcase, value, true )
+            when 'dbname' then
+                do_text( option.downcase, value, true )
+            when 'dbpassword' then
+                do_text( option.downcase, value, true )
+            when 'dbport' then
+                do_integer( name, option.downcase, value, true )
+            when 'dbserver' then
+                do_text( option.downcase, value, true )
+            when 'dbsocket' then
+                do_text( option.downcase, value, true )
+            when 'dbuser' then
+                do_text( option.downcase, value, true )
+            when 'deviceconfig' then
+                do_text( option.downcase, value, true )
+            when 'devicedir' then
+                do_text( option.downcase, value, true )
+            when 'diff' then
+                do_text( option.downcase, value, true )
+            when 'diff_args' then
+                do_text( option.downcase, value, true )
+            when 'dns_alt_names' then
+                do_text( option.downcase, value, true )
+            when 'document_all' then
+                do_boolean( name, option.downcase, value, true )
+            when 'downcasefacts' then
+                do_boolean( name, option.downcase, value, true )
+            when 'dynamicfacts' then
+                do_text( option.downcase, value, true )
+            when 'environment' then
+                do_text( option.downcase, value, true )
+            when 'evaltrace' then
+                do_boolean( name, option.downcase, value, true )
+            when 'external_nodes' then
+                do_text( option.downcase, value, true )
+            when 'factdest' then
+                do_text( option.downcase, value, true )
+            when 'factpath' then
+                do_text( option.downcase, value, true )
+            when 'facts_terminus' then
+                do_text( option.downcase, value, true )
+            when 'factsignore' then
+                do_text( option.downcase, value, true )
+            when 'factsource' then
+                do_text( option.downcase, value, true )
+            when 'factsync' then
+                do_boolean( name, option.downcase, value, true )
+            when 'fileserverconfig' then
+                do_text( option.downcase, value, true )
+            when 'filetimeout' then
+                do_integer( name, option.downcase, value, true )
+            when 'freeze_main' then
+                do_boolean( name, option.downcase, value, true )
+            when 'genconfig' then
+                do_boolean( name, option.downcase, value, true )
+            when 'genmanifest' then
+                do_boolean( name, option.downcase, value, true )
+            when 'graph' then
+                do_boolean( name, option.downcase, value, true )
+            when 'graphdir' then
+                do_text( option.downcase, value, true )
+            when 'group' then
+                do_text( option.downcase, value, true )
+            when 'hostcert' then
+                do_text( option.downcase, value, true )
+            when 'hostcrl' then
+                do_text( option.downcase, value, true )
+            when 'hostcsr' then
+                do_text( option.downcase, value, true )
+            when 'hostprivkey' then
+                do_text( option.downcase, value, true )
+            when 'hostpubkey' then
+                do_text( option.downcase, value, true )
+            when 'http_compression' then
+                do_boolean( name, option.downcase, value, true )
+            when 'http_proxy_host' then
+                do_text( option.downcase, value, true )
+            when 'http_proxy_port' then
+                do_text( option.downcase, value, true )
+            when 'httplog' then
+                do_text( option.downcase, value, true )
+            when 'ignorecache' then
+                do_boolean( name, option.downcase, value, true )
+            when 'ignoreimport' then
+                do_boolean( name, option.downcase, value, true )
+            when 'ignoreschedules' then
+                do_boolean( name, option.downcase, value, true )
+            when 'inventory_port' then
+                do_integer( name, option.downcase, value, true )
+            when 'inventory_server' then
+                do_text( option.downcase, value, true )
+            when 'inventory_terminus' then
+                do_text( option.downcase, value, true )
+            when 'keylength' then
+                do_integer( name, option.downcase, value, true )
+            when 'lastrunfile' then
+                do_text( option.downcase, value, true )
+            when 'lastrunreport' then
+                do_text( option.downcase, value, true )
+            when 'ldapattrs' then
+                do_text( option.downcase, value, true )
+            when 'ldapbase' then
+                do_text( option.downcase, value, true )
+            when 'ldapclassattrs' then
+                do_text( option.downcase, value, true )
+            when 'ldapnodes' then
+                do_text( option.downcase, value, true )
+            when 'ldapparentattr' then
+                do_text( option.downcase, value, true )
+            when 'ldappassword' then
+                do_text( option.downcase, value, true )
+            when 'ldapport' then
+                do_integer( name, option.downcase, value, true )
+            when 'ldapserver' then
+                do_text( option.downcase, value, true )
+            when 'ldapssl' then
+                do_boolean( name, option.downcase, value, true )
+            when 'ldapstackedattrs' then
+                do_text( option.downcase, value, true )
+            when 'ldapstring' then
+                do_text( option.downcase, value, true )
+            when 'ldaptls' then
+                do_boolean( name, option.downcase, value, true )
+            when 'ldapuser' then
+                do_text( option.downcase, value, true )
+            when 'lexical' then
+                do_boolean( name, option.downcase, value, true )
+            when 'libdir' then
+                do_text( option.downcase, value, true )
+            when 'listen' then
+                do_boolean( name, option.downcase, value, true )
+            when 'localcacert' then
+                do_text( option.downcase, value, true )
+            when 'localconfig' then
+                do_text( option.downcase, value, true )
+            when 'logdir' then
+                do_text( option.downcase, value, true )
+            when 'manage_internal_file_permissions' then
+                do_boolean( name, option.downcase, value, true )
+            when 'manifest' then
+                do_text( option.downcase, value, true )
+            when 'manifestdir' then
+                do_text( option.downcase, value, true )
+            when 'masterhttplog' then
+                do_text( option.downcase, value, true )
+            when 'masterlog' then
+                do_text( option.downcase, value, true )
+            when 'masterport' then
+                do_integer( name, option.downcase, value, true )
+            when 'maximum_uid' then
+                do_integer( name, option.downcase, value, true )
+            when 'mkusers' then
+                do_boolean( name, option.downcase, value, true )
+            when 'module_repository' then
+                do_text( option.downcase, value, true )
+            when 'module_working_dir' then
+                do_text( option.downcase, value, true )
+            when 'modulepath' then
+                do_text( option.downcase, value, true )
+            when 'name' then
+                do_text( option.downcase, value, true )
+            when 'node_name' then
+                do_text( option.downcase, value, true )
+            when 'node_name_fact' then
+                do_text( option.downcase, value, true )
+            when 'node_name_value' then
+                do_text( option.downcase, value, true )
+            when 'node_terminus' then
+                do_text( option.downcase, value, true )
+            when 'noop' then
+                do_boolean( name, option.downcase, value, true )
+            when 'onetime' then
+                do_boolean( name, option.downcase, value, true )
+            when 'passfile' then
+                do_text( option.downcase, value, true )
+            when 'path' then
+                do_text( option.downcase, value, true )
+            when 'pidfile' then
+                do_text( option.downcase, value, true )
+            when 'plugindest' then
+                do_text( option.downcase, value, true )
+            when 'pluginsignore' then
+                do_text( option.downcase, value, true )
+            when 'pluginsource' then
+                do_text( option.downcase, value, true )
+            when 'pluginsync' then
+                do_boolean( name, option.downcase, value, true )
+            when 'postrun_command' then
+                do_text( option.downcase, value, true )
+            when 'preferred_serialization_format' then
+                do_text( option.downcase, value, true )
+            when 'prerun_command' then
+                do_text( option.downcase, value, true )
+            when 'privatedir' then
+                do_text( option.downcase, value, true )
+            when 'privatekeydir' then
+                do_text( option.downcase, value, true )
+            when 'publickeydir' then
+                do_text( option.downcase, value, true )
+            when 'puppetdlockfile' then
+                do_text( option.downcase, value, true )
+            when 'puppetdlog' then
+                do_text( option.downcase, value, true )
+            when 'puppetport' then
+                do_integer( name, option.downcase, value, true )
+            when 'queue_source' then
+                do_text( option.downcase, value, true )
+            when 'queue_type' then
+                do_text( option.downcase, value, true )
+            when 'rails_loglevel' then
+                do_text( option.downcase, value, true )
+            when 'railslog' then
+                do_text( option.downcase, value, true )
+            when 'report' then
+                do_boolean( name, option.downcase, value, true )
+            when 'report_port' then
+                do_integer( name, option.downcase, value, true )
+            when 'report_server' then
+                do_text( option.downcase, value, true )
+            when 'reportdir' then
+                do_text( option.downcase, value, true )
+            when 'reportfrom' then
+                do_text( option.downcase, value, true )
+            when 'reports' then
+                do_text( option.downcase, value, true )
+            when 'reportserver' then
+                do_text( option.downcase, value, true )
+            when 'reporturl' then
+                do_text( option.downcase, value, true )
+            when 'req_bits' then
+                do_integer( name, option.downcase, value, true )
+            when 'requestdir' then
+                do_text( option.downcase, value, true )
+            when 'resourcefile' then
+                do_text( option.downcase, value, true )
+            when 'rest_authconfig' then
+                do_text( option.downcase, value, true )
+            when 'route_file' then
+                do_text( option.downcase, value, true )
+            when 'rrddir' then
+                do_text( option.downcase, value, true )
+            when 'rrdinterval' then
+                do_integer( name, option.downcase, value, true )
+            when 'run_mode' then
+                do_text( option.downcase, value, true )
+            when 'rundir' then
+                do_text( option.downcase, value, true )
+            when 'runinterval' then
+                do_integer( name, option.downcase, value, true )
+            when 'sendmail' then
+                do_text( option.downcase, value, true )
+            when 'serial' then
+                do_text( option.downcase, value, true )
+            when 'server' then
+                do_text( option.downcase, value, true )
+            when 'server_datadir' then
+                do_text( option.downcase, value, true )
+            when 'servertype' then
+                do_text( option.downcase, value, true )
+            when 'show_diff' then
+                do_boolean( name, option.downcase, value, true )
+            when 'signeddir' then
+                do_text( option.downcase, value, true )
+            when 'smtpserver' then
+                do_text( option.downcase, value, true )
+            when 'splay' then
+                do_boolean( name, option.downcase, value, true )
+            when 'splaylimit' then
+                do_integer( name, option.downcase, value, true )
+            when 'ssl_client_header' then
+                do_text( option.downcase, value, true )
+            when 'ssl_client_verify_header' then
+                do_text( option.downcase, value, true )
+            when 'ssldir' then
+                do_text( option.downcase, value, true )
+            when 'statedir' then
+                do_text( option.downcase, value, true )
+            when 'statefile' then
+                do_text( option.downcase, value, true )
+            when 'storeconfigs' then
+                do_boolean( name, option.downcase, value, true )
+            when 'storeconfigs_backend' then
+                do_text( option.downcase, value, true )
+            when 'strict_hostname_checking' then
+                do_boolean( name, option.downcase, value, true )
+            when 'summarize' then
+                do_boolean( name, option.downcase, value, true )
+            when 'syslogfacility' then
+                do_text( option.downcase, value, true )
+            when 'tagmap' then
+                do_text( option.downcase, value, true )
+            when 'tags' then
+                do_text( option.downcase, value, true )
+            when 'templatedir' then
+                do_text( option.downcase, value, true )
+            when 'thin_storeconfigs' then
+                do_boolean( name, option.downcase, value, true )
+            when 'trace' then
+                do_boolean( name, option.downcase, value, true )
+            when 'use_cached_catalog' then
+                do_boolean( name, option.downcase, value, true )
+            when 'usecacheonfailure' then
+                do_boolean( name, option.downcase, value, true )
+            when 'user' then
+                do_text( option.downcase, value, true )
+            when 'vardir' then
+                do_text( option.downcase, value, true )
+            when 'yamldir' then
+                do_text( option.downcase, value, true )
+            when 'zlib' then
+                do_boolean( name, option.downcase, value, true )
+            else
+                err_quit( tag, 'unknown option (' + option + ')' )
+        end
+        result += config_line
+    end
+    return result
+end
+
+# process_sites - process the "sites" hash of hashes
+def process_sites(sites)
+    block = ""
+    sites.sort.map do |site,data|
+        if ( site != "default" ) then
+            block = block + "\n#\n# Site: " + site + "\n#########################################\n"
+            block = block + "[" + site + "_production]\n"
+            block = block + do_indent(true) + "manifest    = $vardir/sites/" + site + "/production/manifests/site.pp\n"
+            block = block + do_indent(true) + "manifestdir = $vardir/sites/" + site + "/production/manifests\n"
+            block = block + do_indent(true) + "modulepath  = $vardir/sites/" + site + "/production/manifests\n"
+            block = block + "\n[" + site + "_development]\n"
+            block = block + do_indent(true) + "manifest    = $vardir/sites/" + site + "/development/default/manifests/site.pp\n"
+            block = block + do_indent(true) + "manifestdir = $vardir/sites/" + site + "/development/default/manifests\n"
+            block = block + do_indent(true) + "modulepath  = $vardir/sites/" + site + "/development/default/manifests\n"
+           
+            data['developers'].sort.map do |developer|
+                block = block + "\n[" + site + "_" + developer + "]\n"
+                block = block + do_indent(true) + "manifest    = $vardir/sites/" + site + "/development/" + developer + "/manifests/site.pp\n"
+                block = block + do_indent(true) + "manifestdir = $vardir/sites/" + site + "/development/" + developer + "/manifests\n"
+                block = block + do_indent(true) + "modulepath  = $vardir/sites/" + site + "/development/" + developer + "/manifests\n"
+            end
+        end
+    end
+    return block
+end
+-%>
+

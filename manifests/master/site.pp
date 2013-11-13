@@ -29,6 +29,7 @@
 #
 #   * CentOS
 #   * Debian
+#   * Fedora
 #   * RedHat
 #   * Ubuntu
 #

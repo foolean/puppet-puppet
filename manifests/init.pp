@@ -37,6 +37,7 @@
 #
 #   * CentOS
 #   * Debian
+#   * Fedora
 #   * RedHat
 #   * Ubuntu
 #
@@ -77,6 +78,7 @@ class puppet (
     $client_packages = $::operatingsystem ? {
         'centos' => 'puppet',
         'debian' => [ 'puppet', 'puppet-common' ],
+        'fedora' => 'puppet',
         'redhat' => 'puppet',
         'ubuntu' => [ 'puppet', 'puppet-common' ],
         default  => false,
@@ -170,6 +172,7 @@ class puppet (
         $dev_packages = $::operatingsystem ? {
             'centos' => [ 'rubygem-puppet-lint', 'vim-puppet' ],
             'debian' => [ 'puppet-lint', 'vim-puppet' ],
+            'fedora' => [ 'rubygem-puppet-lint', 'vim-puppet' ],
             'redhat' => [ 'rubygem-puppet-lint', 'vim-puppet' ],
             'ubuntu' => [ 'puppet-lint', 'vim-puppet' ],
             default  => false,

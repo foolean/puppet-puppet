@@ -264,6 +264,23 @@ node '$::fqdn' {
         ],
     }
 
+    # Make sure we have a defaults.pp for the production module
+    exec { 'copy-production-master-defaults':
+        path    => [ '/bin' ],
+        command => "cp ${settings::vardir}/sites/default/production/modules/puppet/manifests/master/defaults.pp.example ${settings::vardir}/sites/default/production/modules/puppet/manifests/master/defaults.pp",
+        creates => "${settings::vardir}/sites/default/production/modules/puppet/manifests/master/defaults.pp",
+        require => Exec['get-production-puppet-module'],
+    }
+
+    # Make sure we have a defaults.pp for the development module
+    exec { 'copy-development-master-defaults':
+        path    => [ '/bin' ],
+        command => "cp ${settings::vardir}/sites/default/development/modules/puppet/manifests/master/defaults.pp.example ${settings::vardir}/sites/default/development/modules/puppet/manifests/master/defaults.pp",
+        creates => "${settings::vardir}/sites/default/development/modules/puppet/manifests/master/defaults.pp",
+        require => Exec['get-development-puppet-class'],
+    }
+
+    # Make sure we restart the service after updating the configuration files
     service { 'puppetmaster':
         ensure     => 'running',
         hasrestart => true,

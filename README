@@ -1,0 +1,126 @@
+puppet
+
+This module handles the management of puppet agents as well as the
+puppetmaster.  This module also provides for the management of additional
+environments for the purposes of providing puppet services to disparate
+sites.  This essentially provides for CM as a service.
+
+
+Example
+-------
+
+    node myagent {
+        class { 'puppet':
+            mode => 'agent',
+        }
+    }
+
+    # accomplishes the same thing
+    node myotheragent {
+        class { 'puppet': }
+    }
+
+    node mymaster {
+        class { 'puppet':
+            mode  => 'master',
+            sites => {
+                'site1' => {
+                    clients    => [ 'host1', 'host2', etc ],
+                },
+            },
+        }
+    }
+
+
+About this module
+-----------------
+
+Q. Why is there a master/defaults.pp.example file?
+
+The defaults.pp file is the central place where the 'main', 'agent', and
+'master' configuration blocks are kept.  The classes rely on a the central
+configurations to make life a little bit easier and I didn't want future
+module upgrades to destroy any custom configurations an admin may have
+created.
+
+Q. Why not use Heira?
+
+Future versions may, in fact, become Heira aware.
+
+
+Requirements
+------------
+
+This module requires puppet version 2.7 or greater.
+
+For CentOS and RedHat this can be found on the RepoForge site as the EPEL site
+is still publishing v2.6.18
+
+Note: Even as of SLES 11-SP3, Novell SUSE is still using v2.6.18.
+
+
+Packaging
+---------
+
+Creating the package (tarball) that can be installed using puppet's module
+function is simple.  Run the following command while in the top of the module
+directory (e.g. /usr/src/puppet-puppet).
+
+    puppet module build .
+
+The resulting tarball will be named foolean-puppet-$VER.tar.gz and can be found
+in the "pkg" directory within the source tree.
+
+
+PuppetForge Installation
+------------------------
+
+Foolean Puppet is on PuppetLab's PuppetForge making installation as simple as:
+
+    puppet module install foolean/puppet
+
+
+Manual Installation
+-------------------
+
+When we're installing from a tarball the installation and upgrade process
+is the same.  You'll need to set --modulepath if f you're installing the
+module in a path other than the location defined in puppet.conf.
+
+    MODULEPATH=/var/lib/puppet/modules
+    puppet module install         \
+        --force                   \
+        --ignore-dependencies     \
+        --module-path $MODULEPATH \
+        $PATHTO/foolean-puppet-$VER.tar.gz
+
+
+To Do
+-----
+    * Add passenger support
+
+    * Add deeper ownership and mode management on puppet files and directories
+
+
+License
+-------
+
+Copyright (c) 2013 Foolean.org
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+Contact
+-------
+bennett@foolean.org
+

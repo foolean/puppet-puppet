@@ -29,6 +29,8 @@
 #
 #   * CentOS
 #   * Debian
+#   * RedHat
+#   * Ubuntu
 #
 # === Authors
 #

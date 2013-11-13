@@ -38,6 +38,7 @@
 #   * CentOS
 #   * Debian
 #   * RedHat
+#   * Ubuntu
 #
 # === Authors
 #
@@ -77,6 +78,7 @@ class puppet (
         'centos' => 'puppet',
         'debian' => [ 'puppet', 'puppet-common' ],
         'redhat' => 'puppet',
+        'ubuntu' => [ 'puppet', 'puppet-common' ],
         default  => false,
     }
 
@@ -169,6 +171,7 @@ class puppet (
             'centos' => [ 'rubygem-puppet-lint', 'vim-puppet' ],
             'debian' => [ 'puppet-lint', 'vim-puppet' ],
             'redhat' => [ 'rubygem-puppet-lint', 'vim-puppet' ],
+            'ubuntu' => [ 'puppet-lint', 'vim-puppet' ],
             default  => false,
         }
 

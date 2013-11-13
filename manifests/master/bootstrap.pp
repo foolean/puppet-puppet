@@ -40,6 +40,7 @@
 #   * CentOS
 #   * Debian
 #   * RedHat
+#   * Ubuntu
 #
 # === Authors
 #
@@ -68,7 +69,7 @@ class puppet::master::bootstrap {
         'centos','redhat': {
             $puppetmaster_packages = [ 'puppet-server' ]
         }
-        'debian': {
+        'debian','ubuntu': {
             $puppetmaster_packages = [ 'puppetmaster', 'puppetmaster-common' ]
         }
         default: {

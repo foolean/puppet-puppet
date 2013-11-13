@@ -34,6 +34,8 @@
 #
 #   * CentOS
 #   * Debian
+#   * RedHat
+#   * Ubuntu
 #
 # === Notes
 #

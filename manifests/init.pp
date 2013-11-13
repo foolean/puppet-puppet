@@ -1,3 +1,62 @@
+# == Class: puppet
+#
+#   The puppet class handles the maintenance of both puppet agents
+#   and the master.
+#
+# === Parameters
+#
+# [*mode*]
+#
+# [*sites*]
+#
+# [*agent*]
+#
+# [*main*]
+#
+# [*master*]
+#
+# === Variables
+#
+# [*sys_user*]
+#
+# [*sys_group*]
+#
+# [*puppet_user*]
+#
+# [*puppet_group*]
+#
+# [*client_packages*]
+#
+# [*dev_packages*]
+#
+# [*confdir*]
+#
+# [*vardir*]
+#
+# === Supported Operating Systems
+#
+#   * CentOS
+#   * Debian
+#
+# === Authors
+#
+#   Bennett Samowich <bennett@foolean.org>
+#
+# === Copyright
+#
+# Copyright (c) 2013 Foolean.org
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 class puppet (
     $mode   = 'agent',
@@ -104,15 +163,15 @@ class puppet (
 
     # Puppet master specific configurations
     if ( $mode == 'master' ) {
-        $puppet_dev_packages = $::operatingsystem ? {
-            'centos' => 'rubygem-puppet-lint',
+        $dev_packages = $::operatingsystem ? {
+            'centos' => [ 'rubygem-puppet-lint', 'vim-puppet' ],
             'debian' => [ 'puppet-lint', 'vim-puppet' ],
             default  => false,
         }
 
         # Ensure the development packages are installed and up to date.
-        if ( $puppet_dev_packages ) {
-            package { $puppet_dev_packages: ensure => 'latest' }
+        if ( $dev_packages ) {
+            package { $dev_packages: ensure => 'latest' }
         }
 
         # Create the top-level directory for this site

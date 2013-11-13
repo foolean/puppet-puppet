@@ -32,7 +32,16 @@
 #
 # === Supported Operating Systems
 #
+#   * CentOS
 #   * Debian
+#
+# === Notes
+#
+#   * The CentOS operating system assumes the use of RepoForge 
+#     to obtain the puppet package as the EPEL repo is too out
+#     of date.
+#
+#     See: http://repoforge.org/use/
 #
 # === Authors
 #

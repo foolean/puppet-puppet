@@ -35,6 +35,11 @@
 #       # To apply the changes to the system
 #       puppet apply --detailed-exitcodes --verbose ./bootstrap.pp
 #
+# === Supported Operating Systems
+#
+#   * CentOS
+#   * Debian
+#
 # === Authors
 #
 #   Bennett Samowich <bennett@foolean.org>
@@ -59,6 +64,9 @@ class puppet::master::bootstrap {
 
     # Make sure we understand this operating system
     case $::operatingsystem {
+        'centos': {
+            $puppetmaster_packages = [ 'puppet-server' ]
+        }
         'debian': {
             $puppetmaster_packages = [ 'puppetmaster', 'puppetmaster-common' ]
         }

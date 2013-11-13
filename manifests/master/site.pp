@@ -27,6 +27,7 @@
 #
 # === Supported Operating Systems
 #
+#   * CentOS
 #   * Debian
 #
 # === Authors

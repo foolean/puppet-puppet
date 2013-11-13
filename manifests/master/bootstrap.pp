@@ -39,6 +39,7 @@
 #
 #   * CentOS
 #   * Debian
+#   * RedHat
 #
 # === Authors
 #
@@ -64,7 +65,7 @@ class puppet::master::bootstrap {
 
     # Make sure we understand this operating system
     case $::operatingsystem {
-        'centos': {
+        'centos','redhat': {
             $puppetmaster_packages = [ 'puppet-server' ]
         }
         'debian': {

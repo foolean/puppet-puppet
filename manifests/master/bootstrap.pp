@@ -40,6 +40,7 @@
 #   * CentOS
 #   * Debian
 #   * Fedora
+#   * OpenSUSE
 #   * RedHat
 #   * Ubuntu
 #
@@ -67,7 +68,7 @@ class puppet::master::bootstrap {
 
     # Make sure we understand this operating system
     case $::operatingsystem {
-        'centos','fedora','redhat': {
+        'centos','fedora','opensuse','redhat': {
             $puppetmaster_packages = [ 'puppet-server' ]
         }
         'debian','ubuntu': {

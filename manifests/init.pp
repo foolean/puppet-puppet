@@ -38,6 +38,7 @@
 #   * CentOS
 #   * Debian
 #   * Fedora
+#   * OpenSUSE
 #   * RedHat
 #   * Ubuntu
 #
@@ -76,12 +77,13 @@ class puppet (
 
     # Select the client packages
     $client_packages = $::operatingsystem ? {
-        'centos' => 'puppet',
-        'debian' => [ 'puppet', 'puppet-common' ],
-        'fedora' => 'puppet',
-        'redhat' => 'puppet',
-        'ubuntu' => [ 'puppet', 'puppet-common' ],
-        default  => false,
+        'centos'   => 'puppet',
+        'debian'   => [ 'puppet', 'puppet-common' ],
+        'fedora'   => 'puppet',
+        'opensuse' => 'puppet',
+        'redhat'   => 'puppet',
+        'ubuntu'   => [ 'puppet', 'puppet-common' ],
+        default    => false,
     }
 
     # Fail if we aren't configured for this operating system
@@ -170,12 +172,13 @@ class puppet (
     # Puppet master specific configurations
     if ( $mode == 'master' ) {
         $dev_packages = $::operatingsystem ? {
-            'centos' => [ 'rubygem-puppet-lint', 'vim-puppet' ],
-            'debian' => [ 'puppet-lint', 'vim-puppet' ],
-            'fedora' => [ 'rubygem-puppet-lint', 'vim-puppet' ],
-            'redhat' => [ 'rubygem-puppet-lint', 'vim-puppet' ],
-            'ubuntu' => [ 'puppet-lint', 'vim-puppet' ],
-            default  => false,
+            'centos'   => [ 'rubygem-puppet-lint', 'vim-puppet' ],
+            'debian'   => [ 'puppet-lint', 'vim-puppet' ],
+            'fedora'   => [ 'rubygem-puppet-lint', 'vim-puppet' ],
+            'opensuse' => false,
+            'redhat'   => [ 'rubygem-puppet-lint', 'vim-puppet' ],
+            'ubuntu'   => [ 'puppet-lint', 'vim-puppet' ],
+            default    => false,
         }
 
         # Ensure the development packages are installed and up to date.

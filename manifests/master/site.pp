@@ -30,6 +30,7 @@
 #   * CentOS
 #   * Debian
 #   * Fedora
+#   * OpenSUSE
 #   * RedHat
 #   * Ubuntu
 #

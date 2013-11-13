@@ -99,7 +99,15 @@ class puppet::master::bootstrap {
     # Content for the bootstrapped site.pp file
     $site_pp = "
 node '$::fqdn' {
-    class { 'puppet::master': }
+    class { 'puppet':
+        mode  => 'master',
+        sites => {
+            'default' => {
+                'clients'    => [],
+                'developers' => [],
+            },
+        },
+    }
 }
 "
 
@@ -206,6 +214,8 @@ node '$::fqdn' {
         group   => 'puppet',
         mode    => '0640',
         content => inline_template($puppet_conf),
+        require => Package[$puppetmaster_packages],
+        notify  => Service['puppetmaster'],
     }
 
     # Bootstrap the production site.pp file
@@ -219,14 +229,14 @@ node '$::fqdn' {
         ],
     }
 
-    # Bootstrap the site.pp file
-    file { "${settings::vardir}/sites/default/production/manifests/site.pp":
+    # Bootstrap the development site.pp file
+    file { "${settings::vardir}/sites/default/development/manifests/site.pp":
         owner   => 'root',
         group   => 'puppet',
         mode    => '0640',
         content => inline_template($site_pp),
         require => [
-            File["${settings::vardir}/sites/default/production/manifests"],
+            File["${settings::vardir}/sites/default/development/manifests"],
         ],
     }
 
@@ -251,6 +261,16 @@ node '$::fqdn' {
         creates => "${settings::vardir}/sites/default/production/modules/puppet",
         require => [
             File["${settings::vardir}/sites/default/production/modules"],
+        ],
+    }
+
+    service { 'puppetmaster':
+        ensure     => 'running',
+        hasrestart => true,
+        hasstatus  => true,
+        require    => [
+            Package[$puppetmaster_packages],
+            File['/etc/puppet/puppet.conf'],
         ],
     }
 }

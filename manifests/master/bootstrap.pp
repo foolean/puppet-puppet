@@ -292,6 +292,42 @@ node '$::fqdn' {
         require => Exec['get-development-puppet-class'],
     }
 
+    # Create the default site's production lib directory
+    # (this prevents errors related to pluginsync before any plugins exist)
+    # NOTE: This could be removed if the empty lib directory can be included
+    #       the git repository for the module itself.  Empty directories are
+    #       included in packaged puppet modules.  Git however, does not like
+    #       to track empty directories and puppet will assume any file in the
+    #       lib directory is a plugin and copy it.
+    file { "${settings::vardir}/sites/default/production/modules/puppet/lib":
+        ensure  => 'directory',
+        owner   => 'root',
+        group   => 'puppet',
+        mode    => '0750',
+        require => [
+            File["${settings::vardir}/sites/default/production/modules"],
+            Exec['get-production-puppet-module'],
+        ],
+    }
+
+    # Create the default site's development lib directory
+    # (this prevents errors related to pluginsync before any plugins exist)
+    # NOTE: This could be removed if the empty lib directory can be included
+    #       the git repository for the module itself.  Empty directories are
+    #       included in packaged puppet modules.  Git however, does not like
+    #       to track empty directories and puppet will assume any file in the
+    #       lib directory is a plugin and copy it.
+    file { "${settings::vardir}/sites/default/development/modules/puppet/lib":
+        ensure  => 'directory',
+        owner   => 'root',
+        group   => 'puppet',
+        mode    => '0750',
+        require => [
+            File["${settings::vardir}/sites/default/development/modules"],
+            Exec['get-development-puppet-class'],
+        ],
+    }
+
     # Make sure we restart the service after updating the configuration files
     service { 'puppetmaster':
         ensure     => 'running',

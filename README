@@ -95,6 +95,29 @@ module in a path other than the location defined in puppet.conf.
         $PATHTO/foolean-puppet-$VER.tar.gz
 
 
+Bootstrapping
+-------------
+
+When going for complete deterministic installations we will quickly find
+ourselves in chicken/egg territory.  We use puppet to ensure determinism
+in our systems but how do we get puppet onto a new puppetmaster when an
+existing puppetmaster doesn't exist?  That is the purpose of the 
+"bootstrap.pp" file.  The first time the operating system comes up after
+install the following steps can be run to bootstrap the puppetmaster.
+
+    # install puppet
+    apt-get install puppet
+
+    # retrieve the bootstrap.pp file
+    wget https://raw.github.com/foolean/puppet-puppet/master/manifests/master/bootstrap.pp
+
+    # run the bootstrap process (add --noop if you want to review first)
+    puppet apply --detailed-exitcodes --verbose ./bootstrap.pp
+
+    # run puppet again to configure the system as a puppetmaster
+    puppet agent --test
+
+
 To Do
 -----
     * Add passenger support

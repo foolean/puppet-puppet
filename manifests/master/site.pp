@@ -137,8 +137,7 @@ define puppet::master::site (
             ],
         }
 
-
-        # Create the development directory for this site
+        # Create the default development directory for this site
         file { "${puppet::vardir}/sites/${title}/development":
             ensure  => 'directory',
             owner   => $puppet::puppet_user,
@@ -149,19 +148,8 @@ define puppet::master::site (
             ],
         }
 
-        # Create the default development directory for this site
-        file { "${puppet::vardir}/sites/${title}/development/default":
-            ensure  => 'directory',
-            owner   => $puppet::puppet_user,
-            group   => $puppet::puppet_group,
-            mode    => '2660',
-            require => [
-                File["${puppet::vardir}/sites/${title}/development"],
-            ],
-        }
-
         # Create the default development manifests directory for this site
-        file { "${puppet::vardir}/sites/${title}/development/default/manifests":
+        file { "${puppet::vardir}/sites/${title}/development/manifests":
             ensure  => 'directory',
             owner   => $puppet::puppet_user,
             group   => $group,
@@ -169,12 +157,11 @@ define puppet::master::site (
             require => [
                 File["${puppet::vardir}/sites/${title}"],
                 File["${puppet::vardir}/sites/${title}/development"],
-                File["${puppet::vardir}/sites/${title}/development/default"],
             ],
         }
 
         # Create the default development modules directory for this site
-        file { "${puppet::vardir}/sites/${title}/development/default/modules":
+        file { "${puppet::vardir}/sites/${title}/development/modules":
             ensure  => 'directory',
             owner   => $puppet::puppet_user,
             group   => $group,
@@ -182,12 +169,11 @@ define puppet::master::site (
             require => [
                 File["${puppet::vardir}/sites/${title}"],
                 File["${puppet::vardir}/sites/${title}/development"],
-                File["${puppet::vardir}/sites/${title}/development/default"],
             ],
         }
 
         # Create the default development private directory for this site
-        file { "${puppet::vardir}/sites/${title}/development/default/private":
+        file { "${puppet::vardir}/sites/${title}/development/private":
             ensure  => 'directory',
             owner   => $puppet::puppet_user,
             group   => $group,
@@ -195,7 +181,6 @@ define puppet::master::site (
             require => [
                 File["${puppet::vardir}/sites/${title}"],
                 File["${puppet::vardir}/sites/${title}/development"],
-                File["${puppet::vardir}/sites/${title}/development/default"],
             ],
         }
 

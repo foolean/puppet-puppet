@@ -15,7 +15,7 @@ Example
         }
     }
 
-    # accomplishes the same thing
+    # accomplishes the same thing done for 'myagent' above
     node myotheragent {
         class { 'puppet': }
     }
@@ -29,6 +29,8 @@ Example
                 },
             },
         }
+
+        puppet::module { 'foolean::ssh': }
     }
 
 
@@ -46,6 +48,32 @@ created.
 Q. Why not use Heira?
 
 Future versions may, in fact, become Heira aware.
+
+
+Directory Structure
+-------------------
+
+To facilitate host multiple sites, this module creates and relies on the
+following directory structure.
+
+    ${settings::vardir}/sites
+    `-- default
+        |-- development
+        |   |-- manifests
+        |   |   `-- site.pp
+        |   |-- modules
+        |   |   |-- puppet
+        |   |   `-- [ other modules ]
+        |   |-- private
+        |       `-- [ fqdn ]
+        `-- production
+            |-- manifests
+            |   `-- site.pp
+            |-- modules
+            |   |-- puppet
+            |   `-- [ other modules ]
+            |-- private
+                `-- [ fqdn ]
 
 
 Requirements
@@ -146,4 +174,3 @@ limitations under the License.
 Contact
 -------
 bennett@foolean.org
-

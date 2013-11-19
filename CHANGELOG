@@ -1,2 +1,6 @@
+2013-11-19 - Bennett Samowich <bennett@foolean.org> - 0.0.2
+- Added ownership and permission management on puppet related
+  files and directories
+
 2013-11-12 - Bennett Samowich <bennett@foolean.org> - 0.0.1
 - Initial version

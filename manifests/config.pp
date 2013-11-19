@@ -1,7 +1,7 @@
 # == Class: puppet::config
 #
-#   The puppet::config class handles the maintenance of the puppet.conf
-#   file
+#   The puppet::config class handles the maintenance of the puppet
+#   configuration directory and files.
 #
 # === Parameters
 #
@@ -105,6 +105,50 @@ class puppet::config (
         ensure  => 'directory',
         owner   => $puppet::sys_user,
         group   => $puppet::puppet_group,
+        mode    => '2750',
+        require => Package[$puppet::client_packages],
+    }
+
+    # We don't need the modules, manifests, and templates directory
+    # in $confdir because we're setting up our own structure under
+    # $vardir/sites.  However, puppet seems create a manifests
+    # directory in $confdir each time it starts so we'll just symlink
+    # it to the production manifests area if we're the puppetmaster
+    if ( $master ) {
+        # We're the master; symlink $confdir/manifests to the production default
+        file { "${confdir}/manifests":
+            ensure  => "${puppet::vardir}/sites/default/production/manifests",
+            require => File["${puppet::vardir}/sites/default/production/manifests"],
+            force   => true,
+        }
+    } else {
+        file { "${confdir}/manifests":
+            ensure => 'absent',
+            force  => true,
+        }
+    }
+    file { "${confdir}/modules":
+        ensure => 'absent',
+        force  => true,
+    }
+    file { "${confdir}/templates":
+        ensure => 'absent',
+        force  => true,
+    }
+
+    # Debian ships with etckeeper-commit-pre and etckeeper-commit-post
+    # script to be used with the prerun_command and postrun_command
+    # configuration options.  We're removing world permissions so we'll
+    # need to handle these two files directly.
+    file { "${confdir}/etckeeper-commit-pre":
+        owner   => $puppet::sys_user,
+        group   => $puppet::puppet_group,
+        mode    => '0750',
+        require => Package[$puppet::client_packages],
+    }
+    file { "${confdir}/etckeeper-commit-post":
+        owner   => $puppet::sys_user,
+        group   => $puppet::puppet_group,
         mode    => '0750',
         require => Package[$puppet::client_packages],
     }
@@ -139,6 +183,32 @@ class puppet::config (
         content => template( "${module_name}/etc/puppet/auth.conf" ),
         require => [
             File[$confdir],
+        ],
+    }
+
+    # Remove any remaining world permissions from $confdir
+    exec { "remove-world-perms-from-${confdir}":
+        path    => [ '/bin', '/usr/bin' ],
+        command => "chmod -R o-rwx \"${confdir}\"",
+        onlyif  => "test `find \"${confdir}\" \! -type l \( -perm -o=r -o -perm -o=w -o -perm -o=x \) | wc -l` -ge 1",
+        require => [
+            File[$confdir],
+            File["${confdir}/auth.conf"],
+            File["${confdir}/fileserver.conf"],
+            File["${confdir}/puppet.conf"],
+        ],
+    }
+
+    # Ensure user and group ownership for $confdir
+    exec { "enforce-ownership-in-${confdir}":
+        path    => [ '/bin', '/usr/bin' ],
+        command => "chown -R ${puppet::sys_user}.${puppet::puppet_group} \"${confdir}\"",
+        onlyif  => "test `find /etc/puppet \( \! -group puppet \) -o \( \! -user root \) | wc -l` -ge 1",
+        require => [
+            File[$confdir],
+            File["${confdir}/auth.conf"],
+            File["${confdir}/fileserver.conf"],
+            File["${confdir}/puppet.conf"],
         ],
     }
 }

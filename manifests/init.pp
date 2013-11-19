@@ -31,7 +31,7 @@
 #   The main Puppet configuration directory. The default for this setting is
 #   calculated based on the user. If the process is running as root or the
 #   user that Puppet is supposed to run as, it defaults to a system directory,
-#   but if it’s running as any other user, it defaults to being in the user’s
+#   but if it's running as any other user, it defaults to being in the user's
 #   home directory.
 #
 # [*client_packages*]
@@ -56,6 +56,15 @@
 #
 # [*vardir*]
 #   Where Puppet stores dynamic and growing data. 
+#
+# === File and Directory Permissions
+#
+#   This class attempts to remove all 'world' permissions and set ownership
+#   to the puppet user and puppet group as there is really no reason for any
+#   other users to access the puppet files.   The premis is that only an
+#   administrator (e.g. someone with root) should be running puppet on a 
+#   system.  Likewise only an administrator or someone in the puppet group
+#   should be looking at any of the puppet files.
 #
 # === Supported Operating Systems
 #
@@ -184,13 +193,95 @@ class puppet (
         sites  => $use_sites,
     }
 
-    # Ensure the puppet $vardir is correct
+    # Ensure that puppet $vardir is correct
     file { $vardir:
         ensure  => 'directory',
         owner   => $puppet_user,
         group   => $puppet_group,
-        mode    => '2750',
+        mode    => '0750',
         require => Package[$client_packages],
+    }
+
+    # Ensure that $vardir/clientbucket is correct
+    file { "${vardir}/clientbucket":
+        ensure  => 'directory',
+        owner   => $puppet_user,
+        group   => $puppet_group,
+        mode    => '0640',
+        force   => true,
+        recurse => true,
+        require => File[$vardir],
+    }
+
+    # Ensure that $vardir/client_data is correct
+    file { "${vardir}/client_data":
+        ensure  => 'directory',
+        owner   => $puppet_user,
+        group   => $puppet_group,
+        mode    => '0640',
+        force   => true,
+        recurse => true,
+        require => File[$vardir],
+    }
+
+    # Ensure that $vardir/client_yaml is correct
+    file { "${vardir}/client_yaml":
+        ensure  => 'directory',
+        owner   => $puppet_user,
+        group   => $puppet_group,
+        mode    => '0640',
+        force   => true,
+        recurse => true,
+        require => File[$vardir],
+    }
+
+    # Ensure that $vardir/facts is correct
+    file { "${vardir}/facts":
+        ensure  => 'directory',
+        owner   => $puppet_user,
+        group   => $puppet_group,
+        mode    => '0640',
+        force   => true,
+        recurse => true,
+        require => File[$vardir],
+    }
+
+    # Ensure that $vardir/lib is correct
+    # NOTE:
+    #   regardles of the value of manage_internal_file_permissions
+    #   puppet will change this to $sys_user.$sys_group anyway
+    #   so we might as well acquiesce even though being owned
+    #   by puppet would seem to be better.
+    file { "${vardir}/lib":
+        ensure  => 'directory',
+        owner   => $sys_user,
+        group   => $sys_group,
+        mode    => '0660',
+        force   => true,
+        recurse => true,
+        require => File[$vardir],
+    }
+
+    # Ensure that $vardir/ssl is correct
+    file { "${vardir}/ssl":
+        ensure  => 'directory',
+        owner   => $puppet_user,
+        group   => $puppet_group,
+        mode    => '0640',
+        force   => true,
+        recurse => true,
+        require => File[$vardir],
+    }
+
+    # Ensure that $vardir/state is correct
+    file { "${vardir}/state":
+        ensure  => 'directory',
+        owner   => $sys_user,
+        group   => $sys_group,
+        mode    => '0640',
+        force   => true,
+        recurse => true,
+        require => File[$vardir],
     }
 
     # Puppet master specific configurations
@@ -210,12 +301,23 @@ class puppet (
             package { $dev_packages: ensure => 'latest' }
         }
 
+        # puppet-module
+        file { "${vardir}/puppet-module":
+            ensure  => 'directory',
+            owner   => $puppet_user,
+            group   => $puppet_group,
+            mode    => '0640',
+            force   => true,
+            recurse => true,
+            require => File[$vardir],
+        }
+
         # Create the top-level directory for this site
         file { "${vardir}/sites":
             ensure  => 'directory',
-            owner   => $sys_group,
+            owner   => $sys_user,
             group   => $puppet_group,
-            mode    => '2660',
+            mode    => '0660',
             require => File[$vardir],
         }
 

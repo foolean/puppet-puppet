@@ -30,6 +30,15 @@
 #   neither block contains the confdir value then /etc/puppet is used as
 #   a last resort.
 #
+# === File and Directory Permissions
+#
+#   This class attempts to remove all 'world' permissions and set ownership
+#   to the puppet user and puppet group as there is really no reason for any
+#   other users to access the puppet files.   The premis is that only an
+#   administrator (e.g. someone with root) should be running puppet on a
+#   system.  Likewise only an administrator or someone in the puppet group
+#   should be looking at any of the puppet files.
+#
 # === Supported Operating Systems
 #
 #   * CentOS

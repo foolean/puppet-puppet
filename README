@@ -76,6 +76,28 @@ following directory structure.
                 `-- [ fqdn ]
 
 
+
+File and Directory Permissions
+------------------------------
+
+Puppet, by default, will attempt to manage the permissions and ownership
+of the various files within the $vardir structure.  In doing so a number
+of the objects will end up with world readable permissions and ownership
+other than the puppet user or group.  In order to allow this module to
+manage the permissions and ownership the 'manage_internal_file_permissions'
+options is set to 'false' in the main configuration block of puppet.conf.
+
+This module will then to remove all 'world' permissions and set ownership
+to the puppet user and puppet group as there is really no reason for any
+other users to access the puppet files.   The premis is that only an
+administrator (e.g. someone with root) should be running puppet on a
+system.  Likewise only an administrator or someone in the puppet group
+should be looking at any of the puppet files.
+
+Even with all of this there are still a couple of areas where puppet
+itself still tries to enforce ownership.
+
+
 Requirements
 ------------
 

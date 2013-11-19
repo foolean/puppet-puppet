@@ -78,15 +78,16 @@ define puppet::master::site (
     if ( $ensure == 'absent' ) {
         file { "${puppet::vardir}/sites/${title}":
             ensure  => 'absent',
+            force   => true,
             recurse => true,
         }
     } else {
         # Create the top-level directory for this site
         file { "${puppet::vardir}/sites/${title}":
             ensure  => 'directory',
-            owner   => $puppet::puppet_group,
+            owner   => $puppet::puppet_user,
             group   => $puppet::puppet_group,
-            mode    => '2660',
+            mode    => '0660',
             require => File["${puppet::vardir}/sites"],
         }
 
@@ -95,7 +96,7 @@ define puppet::master::site (
             ensure  => 'directory',
             owner   => $puppet::puppet_user,
             group   => $puppet::puppet_group,
-            mode    => '2660',
+            mode    => '0660',
             require => [
                 File["${puppet::vardir}/sites/${title}"],
             ],
@@ -106,7 +107,9 @@ define puppet::master::site (
             ensure  => 'directory',
             owner   => $puppet::puppet_user,
             group   => $group,
-            mode    => '2660',
+            mode    => '0660',
+            force   => true,
+            recurse => true,
             require => [
                 File["${puppet::vardir}/sites/${title}"],
                 File["${puppet::vardir}/sites/${title}/production"],
@@ -118,7 +121,9 @@ define puppet::master::site (
             ensure  => 'directory',
             owner   => $puppet::puppet_user,
             group   => $group,
-            mode    => '2660',
+            mode    => '0660',
+            force   => true,
+            recurse => true,
             require => [
                 File["${puppet::vardir}/sites/${title}"],
                 File["${puppet::vardir}/sites/${title}/production"],
@@ -131,6 +136,8 @@ define puppet::master::site (
             owner   => $puppet::puppet_user,
             group   => $group,
             mode    => '0660',
+            force   => true,
+            recurse => true,
             require => [
                 File["${puppet::vardir}/sites/${title}"],
                 File["${puppet::vardir}/sites/${title}/production"],
@@ -142,7 +149,7 @@ define puppet::master::site (
             ensure  => 'directory',
             owner   => $puppet::puppet_user,
             group   => $puppet::puppet_group,
-            mode    => '2660',
+            mode    => '0660',
             require => [
                 File["${puppet::vardir}/sites/${title}"],
             ],
@@ -153,7 +160,9 @@ define puppet::master::site (
             ensure  => 'directory',
             owner   => $puppet::puppet_user,
             group   => $group,
-            mode    => '2660',
+            mode    => '1660',
+            force   => true,
+            recurse => true,
             require => [
                 File["${puppet::vardir}/sites/${title}"],
                 File["${puppet::vardir}/sites/${title}/development"],
@@ -165,7 +174,9 @@ define puppet::master::site (
             ensure  => 'directory',
             owner   => $puppet::puppet_user,
             group   => $group,
-            mode    => '2660',
+            mode    => '0660',
+            force   => true,
+            recurse => true,
             require => [
                 File["${puppet::vardir}/sites/${title}"],
                 File["${puppet::vardir}/sites/${title}/development"],
@@ -177,7 +188,9 @@ define puppet::master::site (
             ensure  => 'directory',
             owner   => $puppet::puppet_user,
             group   => $group,
-            mode    => '2660',
+            mode    => '0660',
+            force   => true,
+            recurse => true,
             require => [
                 File["${puppet::vardir}/sites/${title}"],
                 File["${puppet::vardir}/sites/${title}/development"],
@@ -189,5 +202,4 @@ define puppet::master::site (
         #       puppet versions less than 3.2.  There is a foreach function
         #       that was introduced in 3.2 that should make this possible.
     }
-
 }

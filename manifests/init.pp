@@ -116,6 +116,7 @@ class puppet (
     $agent       = false,
     $main        = false,
     $master      = false,
+    $passenger   = false,
 )
 {
     # We must declare ourselves as either an agent or master
@@ -312,9 +313,27 @@ class puppet (
         }
     }
 
+    # Make sure the agent is started if we've askef for it to be
+    if ( $agent_start ) {
+        service { 'puppet':
+            ensure    => 'running',
+            enable    => true,
+            subscribe => File["${confdir}/puppet.conf"],
+        }
+    } else {
+        service { 'puppet':
+            ensure => 'stopped',
+            enable => false,
+        }
+    }
+
     # Puppet master specific configurations
     if ( $mode == 'master' ) {
-        $master_start = true
+        if ( $passenger ) {
+            $master_start = false
+        } else {
+            $master_start = true
+        }
 
         $dev_packages = $::operatingsystem ? {
             'centos'   => [ 'rubygem-puppet-lint', 'vim-puppet' ],
@@ -377,6 +396,24 @@ class puppet (
 
         # Create the site's directory structures
         create_resources( puppet::master::site, $sites )
+
+        # Make sure the service is running if it's supposed to be
+        if ( $master_start ) {
+            service { 'puppetmaster':
+                ensure    => 'running',
+                enable    => true,
+                subscribe => [
+                    File["${confdir}/auth.conf"],
+                    File["${confdir}/fileserver.conf"],
+                    File["${confdir}/puppet.conf"],
+                ],
+            }
+        } else {
+            service { 'puppetmaster':
+                ensure => 'stopped',
+                enable => false,
+            }
+        }
     }
 }
 

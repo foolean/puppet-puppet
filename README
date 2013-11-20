@@ -170,9 +170,8 @@ install the following steps can be run to bootstrap the puppetmaster.
 
 To Do
 -----
-    * Add passenger support
 
-    * Add deeper ownership and mode management on puppet files and directories
+    * Add passenger support
 
 
 License

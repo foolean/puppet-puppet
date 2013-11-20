@@ -8,11 +8,23 @@
 # [*agent*]
 #   Agent configuration block
 #
+# [*agent_opts*]
+#   Options to pass along to the puppet agent when starting at boot
+#   The default is an empty string.
+#
+# [*agent_start*]
+#   Specifies whether to start the puppet agent at boot
+#   The default is 'false'
+#
 # [*main*]
 #   Main configuration block
 #
 # [*master*]
 #   Master configuration block
+#
+# [*master_opts*]
+#   Options to pass along to the puppetmaster when starting
+#   The default is an empty string.
 #
 # [*mode*]
 #   The mode of operation the module is to run as.  Possible values
@@ -96,11 +108,14 @@
 #   limitations under the License.
 #
 class puppet (
-    $mode   = 'agent',
-    $sites  = false,
-    $agent  = false,
-    $main   = false,
-    $master = false,
+    $mode        = 'agent',
+    $agent_start = false,
+    $agent_opts  = '',
+    $master_opts = '',
+    $sites       = false,
+    $agent       = false,
+    $main        = false,
+    $master      = false,
 )
 {
     # We must declare ourselves as either an agent or master
@@ -284,8 +299,23 @@ class puppet (
         require => File[$vardir],
     }
 
+    # OS Specific configuration files
+    case $::operatingsystem {
+        'debian': {
+            # Copy in the /etc/default/puppet file
+            file { '/etc/default/puppet':
+                owner   => $puppet::sys_user,
+                group   => $puppet::sys_group,
+                mode    => '0640',
+                content => template( "${module_name}/etc/default/puppet" ),
+            }
+        }
+    }
+
     # Puppet master specific configurations
     if ( $mode == 'master' ) {
+        $master_start = true
+
         $dev_packages = $::operatingsystem ? {
             'centos'   => [ 'rubygem-puppet-lint', 'vim-puppet' ],
             'debian'   => [ 'puppet-lint', 'vim-puppet' ],
@@ -299,6 +329,17 @@ class puppet (
         # Ensure the development packages are installed and up to date.
         if ( $dev_packages ) {
             package { $dev_packages: ensure => 'latest' }
+        }
+
+        # Ensure that $vardir/bucket is correct
+        file { "${vardir}/bucket":
+            ensure  => 'directory',
+            owner   => $puppet_user,
+            group   => $puppet_group,
+            mode    => '0640',
+            force   => true,
+            recurse => true,
+            require => File[$vardir],
         }
 
         # puppet-module
@@ -319,6 +360,19 @@ class puppet (
             group   => $puppet_group,
             mode    => '0660',
             require => File[$vardir],
+        }
+
+        # OS Specific configuration files
+        case $::operatingsystem {
+            'debian': {
+                # Copy in the /etc/default/puppetmaster file
+                file { '/etc/default/puppetmaster':
+                    owner   => $puppet::sys_user,
+                    group   => $puppet::sys_group,
+                    mode    => '0640',
+                    content => template( "${module_name}/etc/default/puppetmaster" ),
+                }
+            }
         }
 
         # Create the site's directory structures

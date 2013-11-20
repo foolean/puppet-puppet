@@ -1,0 +1,7 @@
+# Defaults for puppetmaster - sourced by /etc/init.d/puppetmaster
+
+# Start puppetmaster on boot?
+START=<% if master_start -%>yes<% else -%>no<% end %>
+
+# Startup options.
+DAEMON_OPTS="<%= master_opts -%>"

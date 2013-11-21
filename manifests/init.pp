@@ -16,6 +16,14 @@
 #   Specifies whether to start the puppet agent at boot
 #   The default is 'false'
 #
+# [*listen*]
+#   The IP address that passenger (Apache) should listen to.  This option
+#   is only valid when mode is set to 'passenger'.  The default is '127.0.0.1'.
+#
+# [*log_level*]
+#   The logging level for passenger (Apache).  This option is only valid
+#   when mode is set to 'passenger'.  The default is 'warn'.
+#
 # [*main*]
 #   Main configuration block
 #
@@ -28,7 +36,13 @@
 #
 # [*mode*]
 #   The mode of operation the module is to run as.  Possible values
-#   are 'agent' and 'master'.   The default is 'agent'
+#   are 'agent', 'master', or 'passenger'.   Puppetmasters will use
+#   webbrick when mode is 'master' or passenger when mode is set to
+#   'passenger'.  The default is 'agent'
+#
+# [*remote_workers*]
+#   An array of URLs for remote workers.  This is used when configuring a
+#   front-end balancer to multiple backend workers.
 #
 # [*sites*]
 #   Hash-of-hashes that denotes the sites the puppetmaster will
@@ -36,6 +50,10 @@
 #
 # [*user*]
 #   User configuration block
+#
+# [*workers*]
+#   The number of passenger workers to create.  This option only takes effect
+#   when mode is set to 'passenger'.  Default is 1
 #
 # === Variables
 #
@@ -108,20 +126,23 @@
 #   limitations under the License.
 #
 class puppet (
-    $mode        = 'agent',
-    $agent_start = false,
-    $agent_opts  = '',
-    $master_opts = '',
-    $sites       = false,
-    $agent       = false,
-    $main        = false,
-    $master      = false,
-    $passenger   = false,
+    $mode           = 'agent',
+    $agent_start    = false,
+    $agent_opts     = '',
+    $master_opts    = '',
+    $sites          = false,
+    $agent          = false,
+    $main           = false,
+    $master         = false,
+    $workers        = 0,
+    $listen         = '127.0.0.1',
+    $remote_workers = false,
+    $log_level      = 'warn',
 )
 {
     # We must declare ourselves as either an agent or master
-    if ( $mode != 'agent' and $mode != 'master' ) {
-        fail("invalid mode '${mode}', must be 'agent' or 'master'")
+    if ( $mode != 'agent' and $mode != 'master' and $mode != 'passenger' ) {
+        fail("invalid mode '${mode}', must be 'agent', 'master', or 'passenger'")
     }
 
     # Select the client packages
@@ -170,6 +191,16 @@ class puppet (
         default  => '/var/lib/puppet',
     }
 
+    # apache2 group
+    $apache2_group = $::operatingsystem ? {
+        default => 'www-data'
+    }
+
+    # Path to apache2's sites-available directory
+    $sites_available = $::operatingsystem ? {
+        default => '/etc/apache2/sites-available'
+    }
+
     # Make sure the client packages are installed
     package { $client_packages:
         ensure => 'installed',
@@ -177,7 +208,7 @@ class puppet (
 
     # Only the puppet master may override the defaults
     include puppet::master::defaults
-    if ( $mode == 'master' ) {
+    if ( $mode == 'master' or $mode == 'passenger' ) {
         if ( $main ) {
             $use_main = $main
         } else {
@@ -328,13 +359,100 @@ class puppet (
     }
 
     # Puppet master specific configurations
-    if ( $mode == 'master' ) {
-        if ( $passenger ) {
+    if ( $mode == 'master' or $mode == 'passenger' ) {
+        # Make sure we understand this operating system
+        case $::operatingsystem {
+            'centos','fedora','opensuse','redhat': {
+                $puppetmaster_packages = [ 'puppet-server' ]
+            }
+            'debian','ubuntu': {
+                $puppetmaster_packages = [ 'puppetmaster', 'puppetmaster-common' ]
+            }
+            default: {
+                fail("${title} puppetmaster not configured for ${::operatingsystem}, exiting")
+            }
+        }
+
+        # Install the puppetmaster packages
+        package { $puppetmaster_packages:
+            ensure => 'installed',
+        }
+
+        # If we're running passenger then we have more to do
+        if ( $mode == 'passenger' ) {
+            # We're going to disable puppetmaster since we're running passenger
             $master_start = false
+
+            # Packages required for running passenger
+            case $::operatingsystem {
+                'debian','ubuntu': {
+                    $passenger_packages = [ 'puppetmaster-passenger' ]
+                }
+                default: {
+                    fail("${title} passenger not configured for ${::operatingsystem}, exiting")
+                }
+            }
+
+            # Make sure the passenger packages are installed
+            package { $passenger_packages:
+                ensure => 'installed'
+            }
+
+            # If we've specified remote workers then we
+            # don't need tocreate any local workers.
+            if ( $remote_workers != false ) {
+                $num_workers = 0
+            } else {
+                $num_workers = $workers
+            }
+
+            # Create the main balancer configuration
+            file { "${sites_available}/30_puppetmaster_balancer_8140":
+                owner   => $sys_user,
+                group   => $sys_group,
+                mode    => '0440',
+                content => template( "${module_name}/${sites_available}/30_puppetmaster_balancer.conf" ),
+                require => Package[$passenger_packages],
+                notify  => Exec['puppet-passenger-apache2ctl-graceful'],
+            }
+
+            # Enable the balancer
+            puppet::master::passenger::a2ensite { "30_puppetmaster_balancer_8140":
+                require => File["${puppet::sites_available}/30_puppetmaster_balancer_8140"],
+            }
+
+            # Create the CA workers
+            puppet::master::passenger::worker { 'ca-worker':
+                workers       => 2,
+                starting_port => 18138,
+                listen        => $listen,
+                log_level     => $log_level,
+                require       => Package[$passenger_packages],
+                notify        => Exec['puppet-passenger-apache2ctl-graceful'],
+            }
+
+            # Create the actual workers
+            puppet::master::passenger::worker { 'worker':
+                workers   => $num_workers,
+                listen    => $listen,
+                log_level => $log_level,
+                require   => Package[$passenger_packages],
+                notify    => Exec['puppet-passenger-apache2ctl-graceful'],
+            }
+
+            # Debian creates a default site named 'puppetmaster' that don't use
+            puppet::master::passenger::a2dissite { 'puppetmaster': }
+
+            # Make sure the required Apache modules are loaded
+            puppet::master::passenger::a2enmod { 'ssl': }
+            puppet::master::passenger::a2enmod { 'proxy': }
+            puppet::master::passenger::a2enmod { 'proxy_balancer': }
+            puppet::master::passenger::a2enmod { 'proxy_http': }
         } else {
             $master_start = true
         }
 
+        # Packages useful for puppet development (e.g. writing manifests and such)
         $dev_packages = $::operatingsystem ? {
             'centos'   => [ 'rubygem-puppet-lint', 'vim-puppet' ],
             'debian'   => [ 'puppet-lint', 'vim-puppet' ],
@@ -361,7 +479,7 @@ class puppet (
             require => File[$vardir],
         }
 
-        # puppet-module
+        # Ensure that $vardir/puppet-module is correct
         file { "${vardir}/puppet-module":
             ensure  => 'directory',
             owner   => $puppet_user,
@@ -384,13 +502,20 @@ class puppet (
         # OS Specific configuration files
         case $::operatingsystem {
             'debian': {
-                # Copy in the /etc/default/puppetmaster file
-                file { '/etc/default/puppetmaster':
-                    owner   => $puppet::sys_user,
-                    group   => $puppet::sys_group,
-                    mode    => '0640',
-                    content => template( "${module_name}/etc/default/puppetmaster" ),
-                }
+                $puppetmaster_defaults = '/etc/default/puppetmaster'
+            }
+            default: {
+                $puppetmaster_defaults = false
+            }
+        }
+
+        # Copy in the /etc/default/puppetmaster file
+        if ( $puppetmaster_defaults ) {
+            file { '/etc/default/puppetmaster':
+                owner   => $puppet::sys_user,
+                group   => $puppet::sys_group,
+                mode    => '0640',
+                content => template( "${module_name}${puppetmaster_defaults}" ),
             }
         }
 
@@ -406,12 +531,25 @@ class puppet (
                     File["${confdir}/auth.conf"],
                     File["${confdir}/fileserver.conf"],
                     File["${confdir}/puppet.conf"],
+                    File[$puppetmaster_defaults],
                 ],
             }
         } else {
             service { 'puppetmaster':
                 ensure => 'stopped',
                 enable => false,
+            }
+
+            # Exec to reload Apache if the puppet configuration changes
+            exec { 'puppet-passenger-apache2ctl-graceful':
+                path      => [ '/usr/sbin' ],
+                command   => 'apache2ctl graceful',
+                refreshonly => true,
+                subscribe => [
+                    File["${confdir}/auth.conf"],
+                    File["${confdir}/fileserver.conf"],
+                    File["${confdir}/puppet.conf"],
+                ],
             }
         }
     }

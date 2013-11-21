@@ -2,7 +2,7 @@ name    'foolean-puppet'
 version '0.0.2'
 
 author  'bennett@foolean.org'
-summary 'Manage puppet agents and master'
+summary 'Manage puppet agents, master/passenger, and host multiple agent sites'
 description 'Manage puppet agents as well as the puppetmaster.  This module
 also provides the ability to manage multiple environments for the purposes of
 providing puppet services to disparate sites resulting in CM as a service.'

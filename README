@@ -33,6 +33,20 @@ Example
         puppet::module { 'foolean::ssh': }
     }
 
+    # A puppetmaster running passenger
+    node myothermaster {
+        class { 'puppet':
+            mode    => 'passenger',
+            workers => 5,
+            sites   => {
+                'site1' => {
+                    clients    => [ 'host1', 'host2', etc ],
+                },
+            },
+        }
+
+        puppet::module { 'foolean::ssh': }
+    }
 
 About this module
 -----------------
@@ -48,6 +62,40 @@ created.
 Q. Why not use Heira?
 
 Future versions may, in fact, become Heira aware.
+
+Q. Shouldn't the Apache2 controls be in an Apache module instead of here?
+
+This is an experiment to see if it is posisble to have this class be
+indepedent of any other classes.  Ordinarily functionality such as the
+Apache2 controls would be handled by an Apache module so that enhancements
+will be carried through to all classes who utilize it.  The a2ensite,
+a2dissite, and a2enmod defines are innocuous enough that their structure
+should not need to change.   It is also the hopes of this module that
+it will not conflict with other Apache modules.  In the future, a Foolean
+Apache module will be created.  This module may depend on the Apache
+module only if conflicts can not be avoided.   In the end, this is all
+an attempt to publish useful modules without having to foist additional
+modules upon the adopter.
+
+
+
+Supported Operating Systems
+---------------------------
+
+Primary development is done on Debian and then validated against other
+operating systems.  The current list of supported operating systems is:
+
+    * Debian
+
+    puppet::master::bootstrap is known to work on:
+
+    * CentOS
+    * Debian
+    * Fedora
+    * OpenSUSE
+    * RedHat
+    * Ubuntu
+
 
 
 Directory Structure

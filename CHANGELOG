@@ -1,3 +1,6 @@
+2013-11-22 - Bennett Samowich <bennett@foolean.org> - 0.1.0
+- Added passenger support
+
 2013-11-19 - Bennett Samowich <bennett@foolean.org> - 0.0.2
 - Added ownership and permission management on puppet related
   files and directories

@@ -549,6 +549,60 @@ class puppet (
             require => File[$vardir],
         }
 
+        # Copy in the CA certificate if we have one
+        $cacert = file(
+            "${settings::vardir}/sites/default/${environment}/private/${::fqdn}/${settings::cacert}",
+            '/dev/null'
+        )
+        if ( $cacert ) {
+            file { $settings::cacert:
+                mode    => '0640',
+                owner   => $puppet_user,
+                group   => $puppet_group,
+                content => $cacert,
+                require => [
+                    Package[$puppetmaster_packages],
+                    File[$settings::ssldir],
+                ],
+            }
+        }
+
+        # Copy in the CA key if we have one
+        $cakey = file(
+            "${settings::vardir}/sites/default/${environment}/private/${::fqdn}/${settings::cakey}",
+            '/dev/null'
+        )
+        if ( $cakey ) {
+            file { $settings::cakey:
+                mode    => '0640',
+                owner   => $puppet_user,
+                group   => $puppet_group,
+                content => $cakey,
+                require => [
+                    Package[$puppetmaster_packages],
+                    File[$settings::ssldir],
+                ],
+            }
+        }
+
+        # Copy in the CA pass if we have one
+        $capass = file(
+            "${settings::vardir}/sites/default/${environment}/private/${::fqdn}/${settings::capass}",
+            '/dev/null'
+        )
+        if ( $capass ) {
+            file { $settings::capass:
+                mode    => '0640',
+                owner   => $puppet_user,
+                group   => $puppet_group,
+                content => $capass,
+                require => [
+                    Package[$puppetmaster_packages],
+                    File[$settings::ssldir],
+                ],
+            }
+        }
+
         # OS Specific configuration files
         case $::operatingsystem {
             'debian': {
@@ -561,7 +615,7 @@ class puppet (
 
         # Copy in the /etc/default/puppetmaster file
         if ( $puppetmaster_defaults ) {
-            file { '/etc/default/puppetmaster':
+            file { $puppetmaster_defaults:
                 owner   => $puppet::sys_user,
                 group   => $puppet::sys_group,
                 mode    => '0640',

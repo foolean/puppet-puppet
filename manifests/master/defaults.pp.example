@@ -78,15 +78,18 @@ class puppet::master::defaults {
     }
 
     $main = {
-        vardir   => $puppet::vardir,
-        confdir  => $puppet::confdir,
-        factpath => '$vardir/lib/facter',
-        logdir   => '/var/log/puppet',
-        rundir   => '/var/run/puppet',
-        ssldir   => '$vardir/ssl',
+        vardir                           => $puppet::vardir,
+        confdir                          => $puppet::confdir,
+        config_version                   => '/bin/date +%Y%m%d%H%M%S',
+        factpath                         => '$vardir/lib/facter',
+        logdir                           => '/var/log/puppet',
+        rundir                           => '/var/run/puppet',
+        ssldir                           => '$vardir/ssl',
+        manage_internal_file_permissions => false,
     }
 
     $master = {
         autosign => false,
+        reports  => 'store,log',
     }
 }

@@ -40,6 +40,11 @@
 #   webbrick when mode is 'master' or passenger when mode is set to
 #   'passenger'.  The default is 'agent'
 #
+# [*remote_ca*]
+#   An array of URLs for remote CA workers.  This is used when configuring a
+#   front-end balancer to backend CA workers.  Only the first two elements of
+#   the array are used.
+#
 # [*remote_workers*]
 #   An array of URLs for remote workers.  This is used when configuring a
 #   front-end balancer to multiple backend workers.
@@ -136,6 +141,7 @@ class puppet (
     $master         = false,
     $workers        = 0,
     $listen         = '127.0.0.1',
+    $remote_ca      = false,
     $remote_workers = false,
     $log_level      = 'warn',
 )
@@ -249,8 +255,8 @@ class puppet (
         require => Package[$client_packages],
     }
 
-    # Ensure that $vardir/clientbucket is correct
-    file { "${vardir}/clientbucket":
+    # Ensure that $settings::clientbucketdir is correct
+    file { "${settings::clientbucketdir}":
         ensure  => 'directory',
         owner   => $puppet_user,
         group   => $puppet_group,
@@ -260,8 +266,8 @@ class puppet (
         require => File[$vardir],
     }
 
-    # Ensure that $vardir/client_data is correct
-    file { "${vardir}/client_data":
+    # Ensure that $settings::client_datadir is correct
+    file { "${settings::client_datadir}":
         ensure  => 'directory',
         owner   => $puppet_user,
         group   => $puppet_group,
@@ -271,8 +277,8 @@ class puppet (
         require => File[$vardir],
     }
 
-    # Ensure that $vardir/client_yaml is correct
-    file { "${vardir}/client_yaml":
+    # Ensure that $settings::clientyamldir is correct
+    file { "${settings::clientyamldir}":
         ensure  => 'directory',
         owner   => $puppet_user,
         group   => $puppet_group,
@@ -293,13 +299,13 @@ class puppet (
         require => File[$vardir],
     }
 
-    # Ensure that $vardir/lib is correct
+    # Ensure that $settings::libdir is correct
     # NOTE:
     #   regardles of the value of manage_internal_file_permissions
     #   puppet will change this to $sys_user.$sys_group anyway
     #   so we might as well acquiesce even though being owned
     #   by puppet would seem to be better.
-    file { "${vardir}/lib":
+    file { "${settings::libdir}":
         ensure  => 'directory',
         owner   => $sys_user,
         group   => $sys_group,
@@ -309,8 +315,8 @@ class puppet (
         require => File[$vardir],
     }
 
-    # Ensure that $vardir/ssl is correct
-    file { "${vardir}/ssl":
+    # Ensure that $settings::ssldir is correct
+    file { "${settings::ssldir}":
         ensure  => 'directory',
         owner   => $puppet_user,
         group   => $puppet_group,
@@ -320,8 +326,8 @@ class puppet (
         require => File[$vardir],
     }
 
-    # Ensure that $vardir/state is correct
-    file { "${vardir}/state":
+    # Ensure that $settings::statedir is correct
+    file { "${settings::statedir}":
         ensure  => 'directory',
         owner   => $sys_user,
         group   => $sys_group,
@@ -468,8 +474,8 @@ class puppet (
             package { $dev_packages: ensure => 'latest' }
         }
 
-        # Ensure that $vardir/bucket is correct
-        file { "${vardir}/bucket":
+        # Ensure that $settings::bucketdir is correct
+        file { "${settings::bucketdir}":
             ensure  => 'directory',
             owner   => $puppet_user,
             group   => $puppet_group,
@@ -479,8 +485,52 @@ class puppet (
             require => File[$vardir],
         }
 
-        # Ensure that $vardir/puppet-module is correct
-        file { "${vardir}/puppet-module":
+        # Ensure that $settings::module_working_dir is correct
+        file { "${settings::module_working_dir}":
+            ensure  => 'directory',
+            owner   => $puppet_user,
+            group   => $puppet_group,
+            mode    => '0640',
+            force   => true,
+            recurse => true,
+            require => File[$vardir],
+        }
+
+        # Ensure that $settings::reportdir is correct
+        file { "${settings::reportdir}":
+            ensure  => 'directory',
+            owner   => $puppet_user,
+            group   => $puppet_group,
+            mode    => '0640',
+            force   => true,
+            recurse => true,
+            require => File[$vardir],
+        }
+
+        # Ensure that $settings::rrddir is correct
+        file { "${settings::rrddir}":
+            ensure  => 'directory',
+            owner   => $puppet_user,
+            group   => $puppet_group,
+            mode    => '0640',
+            force   => true,
+            recurse => true,
+            require => File[$vardir],
+        }
+
+        # Ensure that $settings::server_datadir is correct
+        file { "${settings::server_datadir}":
+            ensure  => 'directory',
+            owner   => $puppet_user,
+            group   => $puppet_group,
+            mode    => '0640',
+            force   => true,
+            recurse => true,
+            require => File[$vardir],
+        }
+
+        # Ensure that $settings::yamldir is correct
+        file { "${settings::yamldir}":
             ensure  => 'directory',
             owner   => $puppet_user,
             group   => $puppet_group,

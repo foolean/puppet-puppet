@@ -139,7 +139,7 @@ class puppet (
     $agent          = false,
     $main           = false,
     $master         = false,
-    $workers        = 0,
+    $workers        = 1,
     $listen         = '127.0.0.1',
     $remote_ca      = false,
     $remote_workers = false,
@@ -335,6 +335,12 @@ class puppet (
         force   => true,
         recurse => true,
         require => File[$vardir],
+    }
+
+    # Make sure that the agent is enabled
+    file { "${settings::agent_disabled_lockfile}":
+        ensure  => 'absent',
+        require => File[$settings::statedir],
     }
 
     # OS Specific configuration files

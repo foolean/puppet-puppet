@@ -2,9 +2,14 @@ puppet
 
 This module handles the management of puppet agents as well as the
 puppetmaster.  This module also provides for the management of additional
-environments for the purposes of providing puppet services to disparate
+environments for the purposes of providing puppet services to multiple
 sites.  This essentially provides for CM as a service.
 
+NOTE: The "sites" feature will be removed (see CAVEAT below).  This
+      this module will still manage the main production and development
+      environments as well as the individual developer environments.
+      These alerts merely serve to get the word out while this module
+      is being retooled.
 
 Example
 -------
@@ -47,6 +52,55 @@ Example
 
         puppet::module { 'foolean::ssh': }
     }
+
+
+
+CAVEAT EMPTOR!
+--------------
+
+******************************************************
+*** DO NOT USE MORE THAN ONE SITE PER PUPPETMASTER ***
+*** IF YOU NEED TO MAINTAIN PRIVACY BETWEEN SITES! ***
+******************************************************
+
+Puppet allows for the execution of arbitrary ruby code on the puppetmaster.
+This can be accomplished in manifest files by using the inline_template
+function or in template files themselves.  The arbitrary code will execute
+in the context of the puppet daemon, typically uid:puppet, gid:puppet.  While
+it limits the scope of readable and writable files over the entire file system
+it does also mean that any file puppet can read so can anyone with the rights
+to upload manifests and templates.  Because of this "feature" there is no way
+to ensure privacy between sites.
+
+    Manifest Example:
+
+    # Grab the puppet.conf file (extra vars to ease 80-char wrapping)
+    $config_file = "${settings::confdir}/${settings::config_file_name}"
+    $foo = inline_template( "<%= %x{ cat ${config_file} } %>" ) 
+    notify { 'show-foo': message => $foo }
+
+    Template Example
+    <%=
+        %x{
+            hostname -f;
+            id ;
+            pwd;
+            echo "#"
+            echo "# uid=puppet and writable"
+            find / -type f -user puppet -perm -u=w  -ls
+            echo "#"
+            echo "# gid=puppet and writable"
+            find / -type f -group puppet -perm -g=w  -ls
+            echo "#"
+            echo "# world writable"
+            find / -type f -perm -o=w -ls
+            echo "#"
+            echo "# facter information"
+            facter
+        }
+    %>
+
+
 
 About this module
 -----------------

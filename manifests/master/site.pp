@@ -160,7 +160,7 @@ define puppet::master::site (
             ensure  => 'directory',
             owner   => $puppet::puppet_user,
             group   => $group,
-            mode    => '1660',
+            mode    => '0660',
             force   => true,
             recurse => true,
             require => [

@@ -337,12 +337,6 @@ class puppet (
         require => File[$vardir],
     }
 
-    # Make sure that the agent is enabled
-    file { "${settings::agent_disabled_lockfile}":
-        ensure  => 'absent',
-        require => File[$settings::statedir],
-    }
-
     # OS Specific configuration files
     case $::operatingsystem {
         'debian': {
@@ -630,7 +624,13 @@ class puppet (
         }
 
         # Create the site's directory structures
-        create_resources( puppet::master::site, $sites )
+        if ( $sites != false ) {
+            notify { 'sites-warning':
+                message => "\nWARNING:\nWARNING: Puppet's ability to run arbitrary ruby code means there is no way to\nWARNING: ensure privacy between sites.  The 'sites' feature may be removed in\nWARNING: the future.  See the 'CAVEAT' in the README file for more details.\nWARNING:\n",
+                loglevel => 'warning',
+            }
+        }
+        create_resources( puppet::master::site, $use_sites )
 
         # Make sure the service is running if it's supposed to be
         if ( $master_start ) {
@@ -638,6 +638,7 @@ class puppet (
                 ensure    => 'running',
                 enable    => true,
                 subscribe => [
+                    Package[$puppetmaster_packages],
                     File["${confdir}/auth.conf"],
                     File["${confdir}/fileserver.conf"],
                     File["${confdir}/puppet.conf"],

@@ -16,6 +16,14 @@
 # [*version*]
 #   Specifies a specific version of the module to be installed
 #
+# === Example
+#
+#   puppet::module { 'example-module': }
+#
+#   puppet::module { 'example-module2':
+#       version => '1.1.0',
+#   }
+#
 # === Limitations
 #
 #   This define does not handle the upgrading of puppet modules.  This is not something
@@ -57,10 +65,6 @@ define puppet::module (
     $version    = '',
 )
 {
-    # The puppet class should come first as it will
-    # most likely be the one to create $modulepath
-    Class['puppet'] -> Puppet::Module[$title]
-
     case $ensure {
         'installed','present': {
             if ( $version != '' ) {

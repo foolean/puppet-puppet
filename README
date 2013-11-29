@@ -14,44 +14,77 @@ NOTE: The "sites" feature will be removed (see CAVEAT below).  This
 Example
 -------
 
-    node myagent {
-        class { 'puppet':
-            mode => 'agent',
-        }
-    }
+   node myagent {
+       class { 'puppet':
+           mode => 'agent',
+       }
+   }
 
-    # accomplishes the same thing done for 'myagent' above
-    node myotheragent {
-        class { 'puppet': }
-    }
+   # accomplishes the same thing done for 'myagent' above
+   node myotheragent {
+       class { 'puppet': }
+   }
 
-    node mymaster {
-        class { 'puppet':
-            mode  => 'master',
-            sites => {
-                'site1' => {
-                    clients    => [ 'host1', 'host2', etc ],
-                },
-            },
-        }
+   # Agent with different tidying requirements
+   node smallagent {
+       class { 'puppet':
+           tidy_age => '4w',
+       }
+   }
 
-        puppet::module { 'foolean::ssh': }
-    }
+   node mymaster {
+       class { 'puppet':
+           mode    => 'master',
+           clients => [ 'host1', 'host2', etc ],
+           modules => [
+               'foolean-ssh'
+           ],
+       }
+   }
 
-    # A puppetmaster running passenger
-    node myothermaster {
-        class { 'puppet':
-            mode    => 'passenger',
-            workers => 5,
-            sites   => {
-                'site1' => {
-                    clients    => [ 'host1', 'host2', etc ],
-                },
-            },
-        }
+   # A puppetmaster with different tidying requirements (5yrs)
+   node mylongtermmaster {
+       class { 'puppet':
+           mode     => 'master',
+           clients  => [ 'host1', 'host2', etc ],
+           tidy_age => '260w',
+           modules  => [
+               'foolean-ssh'
+           ],
+       }
+   }
 
-        puppet::module { 'foolean::ssh': }
-    }
+   # A puppetmaster running passenger
+   node myothermaster {
+       class { 'puppet':
+           mode    => 'passenger',
+           workers => 5,
+           clients => [ 'host1', 'host2', etc ],
+           modules => [
+               'foolean-ssh'
+           ],
+       }
+   }
+
+   # A puppetmaster running passenger and multiple sites
+   node mysitemaster {
+       class { 'puppet':
+           mode    => 'passenger',
+           workers => 5,
+           clients => [ 'host1', 'host2', etc ],
+           modules => [
+               'foolean-ssh'
+           ],
+           sites   => {
+               'site1' => {
+                   'clients' => [ 'host1', 'host2', etc ],
+               },
+               'site2' => {
+                   'clients' => [ 'host1', 'host2', etc ],
+               },
+           },
+       }
+   }
 
 
 

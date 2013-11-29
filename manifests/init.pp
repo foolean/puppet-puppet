@@ -16,6 +16,10 @@
 #   Specifies whether to start the puppet agent at boot
 #   The default is 'false'
 #
+# [*clients*]
+#   An array of IP addresses that the default site will provide puppet
+#   service to.  The default is an empty array.
+#
 # [*listen*]
 #   The IP address that passenger (Apache) should listen to.  This option
 #   is only valid when mode is set to 'passenger'.  The default is '127.0.0.1'.
@@ -40,6 +44,10 @@
 #   webbrick when mode is 'master' or passenger when mode is set to
 #   'passenger'.  The default is 'agent'
 #
+# [*modules*]
+#   An array of modules that should be installed.  The modules must exist
+#   in the PuppetLab's Module Forge.  The default is an empty array.
+#
 # [*remote_ca*]
 #   An array of URLs for remote CA workers.  This is used when configuring a
 #   front-end balancer to backend CA workers.  Only the first two elements of
@@ -49,10 +57,22 @@
 #   An array of URLs for remote workers.  This is used when configuring a
 #   front-end balancer to multiple backend workers.
 #
+# [*site_privacy_warning*]
+#   Toggle the display of the warning that detailes the lack of privacy
+#   between sites.  The default is true
+#
 # [*sites*]
 #   Hash-of-hashes that denotes the sites the puppetmaster will
 #   provide service for.
 #
+# [*tidy*]
+#   Toggle the tidying of the clientbucket directory for agents and the
+#   buckket and reports directories for masters.  The default is true
+#
+# [*tidy_age*]
+#   The age to tidy the bucket, clientbucket, and reports directories to.
+#   The default is '52w'
+# 
 # [*user*]
 #   User configuration block
 #
@@ -91,6 +111,85 @@
 #
 # [*vardir*]
 #   Where Puppet stores dynamic and growing data. 
+#
+# === Examples
+#
+#   node myagent {
+#       class { 'puppet':
+#           mode => 'agent',
+#       }
+#   }
+#
+#   # accomplishes the same thing done for 'myagent' above
+#   node myotheragent {
+#       class { 'puppet': }
+#   }
+#
+#   node smallagent {
+#       class { 'puppet':
+#           tidy_age => '4w',
+#       }
+#   }
+#
+#   node mymaster {
+#       class { 'puppet':
+#           mode    => 'master',
+#           clients => [ 'host1', 'host2', etc ],
+#           modules => [
+#               'foolean-ssh'
+#           ],
+#       }
+#   }
+#
+#   # A puppetmaster running passenger
+#   node myothermaster {
+#       class { 'puppet':
+#           mode    => 'passenger',
+#           workers => 5,
+#           clients => [ 'host1', 'host2', etc ],
+#           modules => [
+#               'foolean-ssh'
+#           ],
+#       }
+#   }
+#
+#   # A puppetmaster running passenger and multiple sites
+#   node mysitemaster {
+#       class { 'puppet':
+#           mode    => 'passenger',
+#           workers => 5,
+#           clients => [ 'host1', 'host2', etc ],
+#           modules => [
+#               'foolean-ssh'
+#           ],
+#           sites   => {
+#               'site1' => {
+#                   'clients' => [ 'host1', 'host2', etc ],
+#               },
+#               'site2' => {
+#                   'clients' => [ 'host1', 'host2', etc ],
+#               },
+#           },
+#       }
+#   }
+#
+# === CAVEAT EMPTOR!
+# 
+#   ******************************************************
+#   *** DO NOT USE MORE THAN ONE SITE PER PUPPETMASTER ***
+#   *** IF YOU NEED TO MAINTAIN PRIVACY BETWEEN SITES! ***
+#   ******************************************************
+#
+#   Puppet allows for the execution of arbitrary ruby code on the puppetmaster.
+#   This can be accomplished in manifest files by using the inline_template
+#   function or in template files themselves.  The arbitrary code will execute
+#   in the context of the puppet daemon, typically uid:puppet, gid:puppet. While
+#   it limits the scope of readable and writable files over the entire file
+#   system it does also mean that any file puppet can read so can anyone with
+#   the rights to upload manifests and templates.  Because of this "feature"
+#   there is no way to ensure privacy between sites.
+#
+#   See the README file for examples
 #
 # === File and Directory Permissions
 #
@@ -131,19 +230,25 @@
 #   limitations under the License.
 #
 class puppet (
-    $mode           = 'agent',
-    $agent_start    = false,
-    $agent_opts     = '',
-    $master_opts    = '',
-    $sites          = false,
-    $agent          = false,
-    $main           = false,
-    $master         = false,
-    $workers        = 1,
-    $listen         = '127.0.0.1',
-    $remote_ca      = false,
-    $remote_workers = false,
-    $log_level      = 'warn',
+    $tidy                 = true,
+    $tidy_age             = '52w',
+    $mode                 = 'agent',
+    $agent_start          = false,
+    $agent_opts           = '',
+    $master_opts          = '',
+    $sites                = false,
+    $agent                = false,
+    $main                 = false,
+    $master               = false,
+    $workers              = 1,
+    $listen               = '127.0.0.1',
+    $remote_ca            = false,
+    $remote_workers       = false,
+    $log_level            = 'warn',
+    $modules              = [],
+    $clients              = [],
+    $developers           = [],
+    $site_privacy_warning = true,
 )
 {
     # We must declare ourselves as either an agent or master
@@ -207,6 +312,20 @@ class puppet (
         default => '/etc/apache2/sites-available'
     }
 
+    # Path to the puppet defaults files
+    $puppet_defaults = $::operatingsystem ? {
+        'debian' => '/etc/default/puppet',
+        'ubuntu' => '/etc/default/puppet',
+        default  => false
+    }
+
+    # Path to the puppetmaster defaults files
+    $puppetmaster_defaults = $::operatingsystem ? {
+        'debian' => '/etc/default/puppetmaster',
+        'ubuntu' => '/etc/default/puppetmaster',
+        default  => false
+    }
+
     # Make sure the client packages are installed
     package { $client_packages:
         ensure => 'installed',
@@ -264,6 +383,18 @@ class puppet (
         force   => true,
         recurse => true,
         require => File[$vardir],
+    }
+
+    # Keep $settings::clientbucketdir pruned to $age
+    if ( $tidy ) {
+        tidy { $settings::clientbucketdir:
+            age     => $tidy_age,
+            backup  => false,
+            recurse => true,
+            rmdirs  => true,
+            type    => 'ctime',
+            require => File[$settings::clientbucketdir],
+        }
     }
 
     # Ensure that $settings::client_datadir is correct
@@ -338,15 +469,13 @@ class puppet (
     }
 
     # OS Specific configuration files
-    case $::operatingsystem {
-        'debian': {
-            # Copy in the /etc/default/puppet file
-            file { '/etc/default/puppet':
-                owner   => $puppet::sys_user,
-                group   => $puppet::sys_group,
-                mode    => '0640',
-                content => template( "${module_name}/etc/default/puppet" ),
-            }
+    if ( $puppet_defaults ) {
+        # Copy in the /etc/default/puppet file
+        file { $puppet_defaults:
+            owner   => $puppet::sys_user,
+            group   => $puppet::sys_group,
+            mode    => '0640',
+            content => template( "${module_name}${puppet_defaults}" ),
         }
     }
 
@@ -356,6 +485,17 @@ class puppet (
             ensure    => 'running',
             enable    => true,
             subscribe => File["${confdir}/puppet.conf"],
+            require   => [
+                Package[$client_packages],
+                File[$vardir],
+                File["${vardir}/facts"],
+                File[$settings::clientbucketdir],
+                File[$settings::client_datadir],
+                File[$settings::clientyamldir],
+                File[$settings::libdir],
+                File[$settings::ssldir],
+                File[$settings::statedir],
+            ],
         }
     } else {
         service { 'puppet':
@@ -482,7 +622,22 @@ class puppet (
             mode    => '0640',
             force   => true,
             recurse => true,
-            require => File[$vardir],
+            require => [
+                Package[$puppetmaster_packages],
+                File[$vardir],
+            ],
+        }
+
+        # Keep $settings::bucketdir pruned to $age
+        if ( $tidy ) {
+            tidy { $settings::bucketdir:
+                age     => $tidy_age,
+                backup  => false,
+                recurse => true,
+                rmdirs  => true,
+                type    => 'ctime',
+                require => File[$settings::bucketdir],
+            }
         }
 
         # Ensure that $settings::module_working_dir is correct
@@ -493,7 +648,10 @@ class puppet (
             mode    => '0640',
             force   => true,
             recurse => true,
-            require => File[$vardir],
+            require => [
+                Package[$puppetmaster_packages],
+                File[$vardir],
+            ],
         }
 
         # Ensure that $settings::reportdir is correct
@@ -504,7 +662,22 @@ class puppet (
             mode    => '0640',
             force   => true,
             recurse => true,
-            require => File[$vardir],
+            require => [
+                Package[$puppetmaster_packages],
+                File[$vardir],
+            ],
+        }
+
+        # Keep $settings::reportdir pruned to $age
+        if ( $tidy ) {
+            tidy { $settings::reportdir:
+                age     => $tidy_age,
+                backup  => false,
+                recurse => true,
+                rmdirs  => true,
+                type    => 'ctime',
+                require => File[$settings::reportdir],
+            }
         }
 
         # Ensure that $settings::rrddir is correct
@@ -515,7 +688,10 @@ class puppet (
             mode    => '0640',
             force   => true,
             recurse => true,
-            require => File[$vardir],
+            require => [
+                Package[$puppetmaster_packages],
+                File[$vardir],
+            ],
         }
 
         # Ensure that $settings::server_datadir is correct
@@ -526,7 +702,10 @@ class puppet (
             mode    => '0640',
             force   => true,
             recurse => true,
-            require => File[$vardir],
+            require => [
+                Package[$puppetmaster_packages],
+                File[$vardir],
+            ],
         }
 
         # Ensure that $settings::yamldir is correct
@@ -537,7 +716,10 @@ class puppet (
             mode    => '0640',
             force   => true,
             recurse => true,
-            require => File[$vardir],
+            require => [
+                Package[$puppetmaster_packages],
+                File[$vardir],
+            ],
         }
 
         # Create the top-level directory for this site
@@ -603,17 +785,7 @@ class puppet (
             }
         }
 
-        # OS Specific configuration files
-        case $::operatingsystem {
-            'debian': {
-                $puppetmaster_defaults = '/etc/default/puppetmaster'
-            }
-            default: {
-                $puppetmaster_defaults = false
-            }
-        }
-
-        # Copy in the /etc/default/puppetmaster file
+        # Copy in the puppetmaster defaults file
         if ( $puppetmaster_defaults ) {
             file { $puppetmaster_defaults:
                 owner   => $puppet::sys_user,
@@ -624,13 +796,23 @@ class puppet (
         }
 
         # Create the site's directory structures
-        if ( $sites != false ) {
-            notify { 'sites-warning':
-                message => "\nWARNING:\nWARNING: Puppet's ability to run arbitrary ruby code means there is no way to\nWARNING: ensure privacy between sites.  The 'sites' feature may be removed in\nWARNING: the future.  See the 'CAVEAT' in the README file for more details.\nWARNING:\n",
-                loglevel => 'warning',
+        if ( $use_sites ) {
+            if ( $use_sites['default'] ) {
+                fail( "ERROR: 'default' can not be defined in the 'sites' parameter" )
+            } else {
+                if ( $site_privacy_warning ) {
+                    notify { 'sites-warning':
+                        message => "\nWARNING:\nWARNING: Puppet's ability to run arbitrary ruby code means there is no way to\nWARNING: ensure privacy between sites.  The 'sites' feature may be removed in\nWARNING: the future.  See the 'CAVEAT' in the README file for more details.\nWARNING: This message can be suppressed by setting 'site_privacy_warning' to\nWARNING: false in the class declaration\nWARNING:\n",
+                        loglevel => 'warning',
+                    }
+                }
             }
+            create_resources( puppet::master::site, $use_sites )
         }
-        create_resources( puppet::master::site, $use_sites )
+        puppet::master::site { 'default':
+            clients    => $clients,
+            developers => $develoeprs,
+        }
 
         # Make sure the service is running if it's supposed to be
         if ( $master_start ) {
@@ -664,5 +846,33 @@ class puppet (
             }
         }
     }
-}
 
+    # Install any modules that were requested.  The extensive
+    # require list is just to ensure that $modulepath exists
+    # prior to actually trying to install the modules.
+    if ( $modules ) {
+        puppet::module { $modules:
+            require => [
+                Package[$puppetmaster_packages],
+                File[$settings::bucketdir],
+                File[$settings::cacert],
+                File[$settings::cakey],
+                File[$settings::capass],
+                File[$settings::clientbucketdir],
+                File[$settings::client_datadir],
+                File[$settings::clientyamldir],
+                File[$settings::libdir],
+                File[$settings::module_working_dir],
+                File[$settings::reportdir],
+                File[$settings::rrddir],
+                File[$settings::server_datadir],
+                File[$settings::ssldir],
+                File[$settings::statedir],
+                File[$settings::yamldir],
+                File[$vardir],
+                File["${vardir}/facts"],
+                File["${vardir}/sites"],
+            ],
+        }
+    }
+}

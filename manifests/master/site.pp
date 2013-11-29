@@ -197,9 +197,20 @@ define puppet::master::site (
             ],
         }
 
+        # Create the developers directory for this site
+        file { "${puppet::vardir}/sites/${title}/developers":
+            ensure  => 'directory',
+            owner   => $puppet::puppet_user,
+            group   => $puppet::puppet_group,
+            mode    => '0660',
+            require => [
+                File["${puppet::vardir}/sites/${title}"],
+            ],
+        }
+
         # Create the individual developer directories
-        # Note: There doesn't seem to be a simple way to handle this in 
-        #       puppet versions less than 3.2.  There is a foreach function
-        #       that was introduced in 3.2 that should make this possible.
+        puppet::master::site::developer { $developers:
+            site => $title,
+        }
     }
 }

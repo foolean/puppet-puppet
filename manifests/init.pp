@@ -251,6 +251,11 @@ class puppet (
     $site_privacy_warning = true,
 )
 {
+    # We must have puppet version 2.7 or higher
+    if ( versioncmp( $::puppetversion, '2.7' ) < 0 ) {
+        fail( 'This module requires puppet version 2.7 or greater' )
+    }
+
     # We must declare ourselves as either an agent or master
     if ( $mode != 'agent' and $mode != 'master' and $mode != 'passenger' ) {
         fail("invalid mode '${mode}', must be 'agent', 'master', or 'passenger'")
@@ -811,7 +816,7 @@ class puppet (
         }
         puppet::master::site { 'default':
             clients    => $clients,
-            developers => $develoeprs,
+            developers => $developers,
         }
 
         # Make sure the service is running if it's supposed to be

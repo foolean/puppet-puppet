@@ -59,6 +59,37 @@ def array_to_string(name, array, delimiter)
     return string
 end
 
+# prepend_array_to_string - convert an array to a delimited string and
+#                           prepend a string to each element.
+def prepend_array_to_string(name, array, delimiter, prepend)
+    # Just return if we were passed 'false'
+    if ( ! array ) then
+        return
+    end
+
+    # Fail if we don't have an array
+    if ( ! array.kind_of?(Array) ) then
+        err_quit(name, 'array_to_string: must be an array')
+    end
+
+    # Just return if we have an empty array
+    if ( array.length == 0 ) then
+        return
+    end
+
+    delim  = ""
+    string = ""
+
+    # Assemble the cipher list into a comma separated list
+    array.sort.each do |value|
+        string += delim + prepend + value
+        delim = delimiter
+    end
+
+    # Return the string
+    return string
+end
+
 # is_valid_ip - return true|false if address is a valid IPv4 or IPv6 address
 def is_valid_ip(address)
     case address
@@ -591,10 +622,10 @@ def process_sites(sites)
             block = block + do_indent(true) + "modulepath  = $vardir/sites/" + site + "/development/default/manifests\n"
            
             data['developers'].sort.map do |developer|
-                block = block + "\n[" + site + "_" + developer + "]\n"
-                block = block + do_indent(true) + "manifest    = $vardir/sites/" + site + "/development/" + developer + "/manifests/site.pp\n"
-                block = block + do_indent(true) + "manifestdir = $vardir/sites/" + site + "/development/" + developer + "/manifests\n"
-                block = block + do_indent(true) + "modulepath  = $vardir/sites/" + site + "/development/" + developer + "/manifests\n"
+                block = block + "\n[" + site + "_" + developer.downcase + "]\n"
+                block = block + do_indent(true) + "manifest    = $vardir/sites/" + site + "/development/" + developer.downcase + "/manifests/site.pp\n"
+                block = block + do_indent(true) + "manifestdir = $vardir/sites/" + site + "/development/" + developer.downcase + "/manifests\n"
+                block = block + do_indent(true) + "modulepath  = $vardir/sites/" + site + "/development/" + developer.downcase + "/manifests\n"
             end
         end
     end

@@ -1,15 +1,14 @@
 puppet
 
 This module handles the management of puppet agents as well as the
-puppetmaster.  This module also provides for the management of additional
-environments for the purposes of providing puppet services to multiple
-sites.  This essentially provides for CM as a service.
+puppetmaster.  Puppetmaster invocations have the option of running
+the standard webrick (the default) or passenger.  Multiple environ-
+ments are created to provide for a three-tiered development archit-
+ecture.  These environments create 'production', 'development', and
+individual 'developer' areas.   This module also provides for the
+management of additional environments for the purposes of providing
+puppet services to multiple sites (see CAVEAT below).
 
-NOTE: The "sites" feature will be removed (see CAVEAT below).  This
-      this module will still manage the main production and development
-      environments as well as the individual developer environments.
-      These alerts merely serve to get the word out while this module
-      is being retooled.
 
 Example
 -------
@@ -57,10 +56,11 @@ Example
    # A puppetmaster running passenger
    node myothermaster {
        class { 'puppet':
-           mode    => 'passenger',
-           workers => 5,
-           clients => [ 'host1', 'host2', etc ],
-           modules => [
+           mode       => 'passenger',
+           workers    => 5,
+           clients    => [ 'host1', 'host2', etc ],
+           developers => [ 'user1', 'user2', etc ],
+           modules    => [
                'foolean-ssh'
            ],
        }
@@ -69,18 +69,21 @@ Example
    # A puppetmaster running passenger and multiple sites
    node mysitemaster {
        class { 'puppet':
-           mode    => 'passenger',
-           workers => 5,
-           clients => [ 'host1', 'host2', etc ],
-           modules => [
+           mode       => 'passenger',
+           workers    => 5,
+           clients    => [ 'host1', 'host2', etc ],
+           developers => [ 'user1', 'user2', etc ],
+           modules    => [
                'foolean-ssh'
            ],
            sites   => {
                'site1' => {
-                   'clients' => [ 'host1', 'host2', etc ],
+                   'clients'    => [ 'host1', 'host2', etc ],
+                   'developers' => [ 'user1', 'user2', etc ],
                },
                'site2' => {
-                   'clients' => [ 'host1', 'host2', etc ],
+                   'clients'    => [ 'host1', 'host2', etc ],
+                   'developers' => [ 'user1', 'user2', etc ],
                },
            },
        }
@@ -199,8 +202,17 @@ following directory structure.
         |   |-- modules
         |   |   |-- puppet
         |   |   `-- [ other modules ]
-        |   |-- private
+        |   `-- private
         |       `-- [ fqdn ]
+        |-- developers
+        |   `-- [ developer ]
+        |       |-- manifests
+        |       |   `-- site.pp
+        |       |-- modules
+        |       |   |-- puppet
+        |       |   `-- [ other modules ]
+        |       `-- private
+        |           `-- [ fqdn ]
         `-- production
             |-- manifests
             |   `-- site.pp

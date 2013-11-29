@@ -1,11 +1,14 @@
 name    'foolean-puppet'
-version '0.1.1'
+version '0.2.0'
 
 author  'bennett@foolean.org'
-summary 'Manage puppet agents, master/passenger, and host multiple agent sites'
-description 'Manage puppet agents as well as the puppetmaster.  This module
-also provides the ability to manage multiple environments for the purposes of
-providing puppet services to disparate sites resulting in CM as a service.'
+summary 'Manage puppet agents, master/passenger, multiple developers, and host multiple agent sites'
+description 'Manage puppet agents as well as the puppetmaster.  Puppetmaster
+invocations have the option of running the standard webbrick (the default)
+or passenger.  Multuple environments are created to provide a three-tiered 
+development architecture.  This module also provides the ability to manage
+multiple environments for the purposes of providing puppet services to
+disparate sites resulting in CM as a service. (see CAVEAT in the README)'
 
 license 'Copyright (c) 2013 Foolean.org
 

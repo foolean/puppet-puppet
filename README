@@ -141,18 +141,6 @@ to ensure privacy between sites.
 About this module
 -----------------
 
-Q. Why is there a master/defaults.pp.example file?
-
-The defaults.pp file is the central place where the 'main', 'agent', and
-'master' configuration blocks are kept.  The classes rely on a the central
-configurations to make life a little bit easier and I didn't want future
-module upgrades to destroy any custom configurations an admin may have
-created.
-
-Q. Why not use Heira?
-
-Future versions may, in fact, become Heira aware.
-
 Q. Shouldn't the Apache2 controls be in an Apache module instead of here?
 
 This is an experiment to see if it is posisble to have this class be

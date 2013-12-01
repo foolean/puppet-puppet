@@ -1,0 +1,74 @@
+#!/bin/bash
+#
+# FILENAME: rundir
+#
+# DESCRIPTION:
+#   Run 'prerun' and 'postrun' scripts out of a directory.  This enables 
+#   modules to add pre and post run mechanics without having to have the
+#   puppet module be aware of every possible module.  The most notable
+#   uses for this are etckeeper and setting file permissions and ownership
+#   on puppet directories.
+#
+# COMMANDS:
+#   Scripts should be placed in the appropriate pre-run.d and post-run.d
+#   directory located in puppet's configuration directory.  This script
+#   will only attempt to run scripts with the executable bit set so be
+#   sure to set the proper permissions on anything that you wish to run.
+#
+# RETURN VALUES:
+#   This script returns 1 if any script returns anything other than 0.
+#
+# CAUTION:
+#   This will run any executable script found in the pre and post run
+#   directories.  It is for this reason that only root should be allowed
+#   to write into them.  Allowing the puppet user to write into these
+#   directories will allow anyone with the ability to add recipees to
+#   the system to run arbitrary code on the agents.  Like cron.d these
+#   will, more often than not, get run as root so care should be taken
+#   regarding the content that gets added.
+#
+###############################################################################
+
+# Determine if we're running 'prerun' or 'postrun'
+case "${1,,}" in
+    pre)
+        CMDDIR="pre-run.d"
+        ;;
+    post)
+        CMDDIR="post-run.d"
+        ;;
+    *)
+        exit 1
+        ;;
+esac
+
+# Path to the puppet configuration directory.
+CONFDIR="<%= scope.lookupvar('settings::confdir') -%>"
+
+# Full path to the pre or post run.d directories
+DIR="${CONFDIR}/${CMDDIR}"
+
+# Return value collector
+RETVAL=0
+
+# Fail if we don't have a directory to run out of.  We look for the
+# puppet.conf file to ensure that we have the correct configuration
+# path to work out of.
+if [ ! -f "${CONFDIR}/puppet.conf" -o ! -d "${DIR}" ]; then
+    exit 1
+fi
+
+# Iterate over the directory and run anything that is executable
+for SCRIPT in "${DIR}/"*; do
+    if [ -f "${SCRIPT}" -a -x "${SCRIPT}" ]; then
+        "${SCRIPT}"; # Execute the script
+
+        # If the script fails then so must we
+        if [ $? != 0 ]; then
+            RETVAL=1
+        fi
+    fi
+done
+
+# Exit with our return value (0=success, 1=fail)
+exit ${RETVAL}

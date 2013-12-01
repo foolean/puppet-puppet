@@ -157,6 +157,18 @@ modules upon the adopter.
 
 
 
+Requirements
+------------
+
+This module requires puppet version 2.7 or greater.
+
+For CentOS and RedHat this can be found on the RepoForge site as the EPEL site
+is still publishing v2.6.18
+
+Note: Even as of SLES 11-SP3, Novell SUSE is still using v2.6.18.
+
+
+
 Supported Operating Systems
 ---------------------------
 
@@ -233,15 +245,30 @@ Even with all of this there are still a couple of areas where puppet
 itself still tries to enforce ownership.
 
 
-Requirements
-------------
 
-This module requires puppet version 2.7 or greater.
+Prerun and Postrun commands
+---------------------------
 
-For CentOS and RedHat this can be found on the RepoForge site as the EPEL site
-is still publishing v2.6.18
+This module uses a cron.d like format to handle prerun and postrun commands.
+Scripts should be placed in either $confdir/pre-run.d or $confdir/post-run.d.
+The 'rundir' script will execute any executable script found in the respective
+directory.  This enables modules to add pre and post run processing much in
+the same manner that cron.d is handled.  Script precedence can be achieved by
+adding numerical prefixes such as pre-run.d/00_etckeeper.
 
-Note: Even as of SLES 11-SP3, Novell SUSE is still using v2.6.18.
+   Example:
+   prerun_command = /etc/puppet/rundir pre
+   postrun_command = /etc/puppet/rundir post
+
+CAUTION:
+   This will run any executable script found in the pre and post run
+   directories.  It is for this reason that only root should be allowed
+   to write into them.  Allowing the puppet user to write into these
+   directories will allow anyone with the ability to add recipees to
+   the system to run arbitrary code on the agents.  Like cron.d these
+   will, more often than not, get run as root so care should be taken
+   regarding the content that gets added.
+
 
 
 Packaging

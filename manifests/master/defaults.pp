@@ -70,12 +70,14 @@
 #
 class puppet::master::defaults {
     $agent = {
-        pluginsync  => true,
-        reports     => 'log',
-        runinterval => 315360000,
-        server      => $::servername,
-        show_diff   => true,
-        summarize   => true,
+        pluginsync      => true,
+        reports         => 'log',
+        runinterval     => 315360000,
+        server          => $::servername,
+        show_diff       => true,
+        summarize       => true,
+        prerun_command  => "${puppet::confdir}/rundir pre",
+        postrun_command => "${puppet::confdir}/rundir post",
     }
 
     $main = {

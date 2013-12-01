@@ -370,6 +370,39 @@ class puppet (
         sites  => $use_sites,
     }
 
+    # Copy in the rundir script
+    file { "${confdir}/rundir":
+        owner   => $puppet::sys_user,
+        group   => $puppet::puppet_group,
+        mode    => '0750',
+        content => template( "${module_name}/etc/puppet/rundir" ),
+        require => [
+            File[$confdir],
+        ],
+    }
+
+    # Create the pre-run.d directory
+    file { "${confdir}/pre-run.d":
+        ensure  => 'directory',
+        owner   => $puppet::sys_user,
+        group   => $puppet::puppet_group,
+        mode    => '0750',
+        require => [
+            File[$confdir],
+        ],
+    }
+
+    # Create the post-run.d directory
+    file { "${confdir}/post-run.d":
+        ensure  => 'directory',
+        owner   => $puppet::sys_user,
+        group   => $puppet::puppet_group,
+        mode    => '0750',
+        require => [
+            File[$confdir],
+        ],
+    }
+
     # Ensure that puppet $vardir is correct
     file { $vardir:
         ensure  => 'directory',

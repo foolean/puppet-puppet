@@ -83,7 +83,7 @@ class puppet::master::defaults {
     $main = {
         vardir                           => $puppet::vardir,
         confdir                          => $puppet::confdir,
-        config_version                   => '/bin/date +%Y%m%d%H%M%S',
+        config_version                   => '/bin/date +%Y%m%d%H%M%S.%N',
         factpath                         => '$vardir/lib/facter',
         logdir                           => '/var/log/puppet',
         rundir                           => '/var/run/puppet',

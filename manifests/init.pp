@@ -249,6 +249,7 @@ class puppet (
     $clients              = [],
     $developers           = [],
     $site_privacy_warning = true,
+    $recurse              = false,
 )
 {
     # We must have puppet version 2.7 or higher
@@ -403,23 +404,33 @@ class puppet (
         ],
     }
 
+    # Copy in the 90_permissions script
+    file { "${confdir}/post-run.d/90_permissions":
+        owner   => $puppet::sys_user,
+        group   => $puppet::puppet_group,
+        mode    => '0750',
+        content => template( "${module_name}/etc/puppet/post-run.d/90_permissions" ),
+        require => [
+            File[$confdir],
+            File["${confdir}/post-run.d"],
+        ],
+    }
+
     # Ensure that puppet $vardir is correct
     file { $vardir:
         ensure  => 'directory',
-        owner   => $puppet_user,
+        owner   => $sys_user,
         group   => $puppet_group,
-        mode    => '0750',
+        mode    => '2750',
         require => Package[$client_packages],
     }
 
     # Ensure that $settings::clientbucketdir is correct
     file { "${settings::clientbucketdir}":
         ensure  => 'directory',
-        owner   => $puppet_user,
+        owner   => $sys_user,
         group   => $puppet_group,
-        mode    => '0640',
-        force   => true,
-        recurse => true,
+        mode    => '2750',
         require => File[$vardir],
     }
 
@@ -438,31 +449,27 @@ class puppet (
     # Ensure that $settings::client_datadir is correct
     file { "${settings::client_datadir}":
         ensure  => 'directory',
-        owner   => $puppet_user,
+        owner   => $sys_user,
         group   => $puppet_group,
-        mode    => '0640',
-        force   => true,
-        recurse => true,
+        mode    => '2750',
         require => File[$vardir],
     }
 
     # Ensure that $settings::clientyamldir is correct
     file { "${settings::clientyamldir}":
         ensure  => 'directory',
-        owner   => $puppet_user,
+        owner   => $sys_user,
         group   => $puppet_group,
-        mode    => '0640',
-        force   => true,
-        recurse => true,
+        mode    => '2750',
         require => File[$vardir],
     }
 
     # Ensure that $vardir/facts is correct
     file { "${vardir}/facts":
         ensure  => 'directory',
-        owner   => $puppet_user,
+        owner   => $sys_user,
         group   => $puppet_group,
-        mode    => '0640',
+        mode    => '2750',
         force   => true,
         recurse => true,
         require => File[$vardir],
@@ -478,20 +485,16 @@ class puppet (
         ensure  => 'directory',
         owner   => $sys_user,
         group   => $sys_group,
-        mode    => '0660',
-        force   => true,
-        recurse => true,
+        mode    => '0770',
         require => File[$vardir],
     }
 
     # Ensure that $settings::ssldir is correct
     file { "${settings::ssldir}":
         ensure  => 'directory',
-        owner   => $puppet_user,
+        owner   => $sys_user,
         group   => $puppet_group,
-        mode    => '0640',
-        force   => true,
-        recurse => true,
+        mode    => '2750',
         require => File[$vardir],
     }
 
@@ -499,10 +502,8 @@ class puppet (
     file { "${settings::statedir}":
         ensure  => 'directory',
         owner   => $sys_user,
-        group   => $sys_group,
-        mode    => '0640',
-        force   => true,
-        recurse => true,
+        group   => $puppet_group,
+        mode    => '2750',
         require => File[$vardir],
     }
 
@@ -655,11 +656,9 @@ class puppet (
         # Ensure that $settings::bucketdir is correct
         file { "${settings::bucketdir}":
             ensure  => 'directory',
-            owner   => $puppet_user,
+            owner   => $sys_user,
             group   => $puppet_group,
-            mode    => '0640',
-            force   => true,
-            recurse => true,
+            mode    => '2750',
             require => [
                 Package[$puppetmaster_packages],
                 File[$vardir],
@@ -681,11 +680,9 @@ class puppet (
         # Ensure that $settings::module_working_dir is correct
         file { "${settings::module_working_dir}":
             ensure  => 'directory',
-            owner   => $puppet_user,
+            owner   => $sys_user,
             group   => $puppet_group,
-            mode    => '0640',
-            force   => true,
-            recurse => true,
+            mode    => '2750',
             require => [
                 Package[$puppetmaster_packages],
                 File[$vardir],
@@ -695,11 +692,9 @@ class puppet (
         # Ensure that $settings::reportdir is correct
         file { "${settings::reportdir}":
             ensure  => 'directory',
-            owner   => $puppet_user,
+            owner   => $sys_user,
             group   => $puppet_group,
-            mode    => '0640',
-            force   => true,
-            recurse => true,
+            mode    => '2750',
             require => [
                 Package[$puppetmaster_packages],
                 File[$vardir],
@@ -721,11 +716,9 @@ class puppet (
         # Ensure that $settings::rrddir is correct
         file { "${settings::rrddir}":
             ensure  => 'directory',
-            owner   => $puppet_user,
+            owner   => $sys_user,
             group   => $puppet_group,
-            mode    => '0640',
-            force   => true,
-            recurse => true,
+            mode    => '2750',
             require => [
                 Package[$puppetmaster_packages],
                 File[$vardir],
@@ -735,11 +728,9 @@ class puppet (
         # Ensure that $settings::server_datadir is correct
         file { "${settings::server_datadir}":
             ensure  => 'directory',
-            owner   => $puppet_user,
+            owner   => $sys_user,
             group   => $puppet_group,
-            mode    => '0640',
-            force   => true,
-            recurse => true,
+            mode    => '2750',
             require => [
                 Package[$puppetmaster_packages],
                 File[$vardir],
@@ -751,9 +742,7 @@ class puppet (
             ensure  => 'directory',
             owner   => $puppet_user,
             group   => $puppet_group,
-            mode    => '0640',
-            force   => true,
-            recurse => true,
+            mode    => '0770',
             require => [
                 Package[$puppetmaster_packages],
                 File[$vardir],
@@ -777,7 +766,7 @@ class puppet (
         if ( $cacert ) {
             file { $settings::cacert:
                 mode    => '0640',
-                owner   => $puppet_user,
+                owner   => $sys_user,
                 group   => $puppet_group,
                 content => $cacert,
                 require => [
@@ -795,7 +784,7 @@ class puppet (
         if ( $cakey ) {
             file { $settings::cakey:
                 mode    => '0640',
-                owner   => $puppet_user,
+                owner   => $sys_user,
                 group   => $puppet_group,
                 content => $cakey,
                 require => [
@@ -813,7 +802,7 @@ class puppet (
         if ( $capass ) {
             file { $settings::capass:
                 mode    => '0640',
-                owner   => $puppet_user,
+                owner   => $sys_user,
                 group   => $puppet_group,
                 content => $capass,
                 require => [

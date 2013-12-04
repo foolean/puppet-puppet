@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# FILENAME: 90_permissions
+#
+# DESCRIPTION:
+#   Reset the ownership and permissions of the puppet directories
+#
+#   NOTE: This script should run successfully on both agent and master systems
+#
+###############################################################################
+
+# Puppet's configuration and main directory
+CONFDIR="<%= scope.lookupvar('puppet::config::confdir') -%>"
+VARDIR="<%= scope.lookupvar('puppet::vardir') -%>"
+
+# System user and group
+SYS_USER="<%= scope.lookupvar('puppet::sys_user') -%>"
+SYS_GROUP="<%= scope.lookupvar('puppet::sys_group') -%>"
+
+# Puppet user and group
+PUPPET_USER="<%= scope.lookupvar('puppet::puppet_user') -%>"
+PUPPET_GROUP="<%= scope.lookupvar('puppet::puppet_group') -%>"
+
+###############################################################################
+
+# Remove world permissions, period
+chmod -R o= "${VARDIR}"
+chmod -R o= "${CONFDIR}"
+
+# Set ownership on /etc/puppet
+chown ${SYS_USER}:${PUPPET_GROUP} "${CONFDIR}"
+chmod 2750 "${CONFDIR}"
+
+# Set ownership and permissions on /var/lib/puppet
+chown ${SYS_USER}:${PUPPET_GROUP} "${VARDIR}"
+chmod 2750 "${VARDIR}"
+
+# Set ownership and permissions on /var/lib/puppet/lib
+if [ -d "${VARDIR}/lib" ]; then
+    chown -R ${SYS_USER}:${SYS_GROUP} "${VARDIR}/lib"
+    chmod -R u=rwX,g=rwX,o= "${VARDIR}/lib"
+fi
+
+# Set ownership and permissions on /var/lib/puppet/yaml
+if [ -d "${VARDIR}/yaml" ]; then
+    chown -R ${PUPPET_USER}:${PUPPET_GROUP} "${VARDIR}/yaml"
+    chmod -R u=rwX,g=rwX,o= "${VARDIR}/yaml"
+fi
+
+# Set ownership to root:puppet
+# Set permissions to u=rwX,g=rX,o=
+find /var/lib/puppet/* -type d -prune \
+    \( \! -name sites -a \! -name lib -a \! -name yaml \) | \
+while read DIR
+do
+    chown -R ${SYS_USER}:${PUPPET_GROUP} "${DIR}"
+    chmod -R u=rwX,g=rX,o= "${DIR}"
+    find "${DIR}" -type d -exec chmod 2750 {} \;
+done

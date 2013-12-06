@@ -9,6 +9,12 @@
 #   uses for this are etckeeper and setting file permissions and ownership
 #   on puppet directories.
 #
+# USAGE:
+#   # <%= scope.lookupvar('settings::confdir') -%>
+#   [agent]
+#       prerun_command = <%= scope.lookupvar('settings::confdir') -%>/rundir pre
+#       postrun_command = <%= scope.lookupvar('settings::confdir') -%>/rundir post
+#
 # COMMANDS:
 #   Scripts should be placed in the appropriate pre-run.d and post-run.d
 #   directory located in puppet's configuration directory.  This script
@@ -51,6 +57,9 @@ DIR="${CONFDIR}/${CMDDIR}"
 # Return value collector
 RETVAL=0
 
+# Logging command
+LOGGER="logger -i -t puppet-rundir"
+
 # Fail if we don't have a directory to run out of.  We look for the
 # puppet.conf file to ensure that we have the correct configuration
 # path to work out of.
@@ -61,11 +70,16 @@ fi
 # Iterate over the directory and run anything that is executable
 for SCRIPT in "${DIR}/"*; do
     if [ -f "${SCRIPT}" -a -x "${SCRIPT}" ]; then
-        "${SCRIPT}"; # Execute the script
+        if [ "${PUPPET_NOOP,,}" == "true" ]; then
+            ${LOGGER} "${1,,}: Executing ${SCRIPT}, not run (noop)"
+        else  
+            ${LOGGER} "${1,,}: Executing ${SCRIPT}"
+            "${SCRIPT}"; # Execute the script
 
-        # If the script fails then so must we
-        if [ $? != 0 ]; then
-            RETVAL=1
+            # If the script fails then so must we
+            if [ $? != 0 ]; then
+                RETVAL=1
+            fi
         fi
     fi
 done

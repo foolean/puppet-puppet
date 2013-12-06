@@ -260,6 +260,11 @@ adding numerical prefixes such as pre-run.d/00_etckeeper.
    prerun_command = /etc/puppet/rundir pre
    postrun_command = /etc/puppet/rundir post
 
+NOTE:
+   The 'rundir' script utilizes the PUPPET_NOOP variable, which is set
+   by the facter script isnoop.rb to skip the running of the prerun and
+   postrun scripts when running with --noop turned on.
+
 CAUTION:
    This will run any executable script found in the pre and post run
    directories.  It is for this reason that only root should be allowed

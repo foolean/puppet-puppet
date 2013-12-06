@@ -76,8 +76,8 @@ class puppet::master::defaults {
         server          => $::servername,
         show_diff       => true,
         summarize       => true,
-        prerun_command  => "${puppet::confdir}/rundir pre",
         postrun_command => "${puppet::confdir}/rundir post",
+        prerun_command  => "${puppet::confdir}/rundir pre",
     }
 
     $main = {

@@ -1,5 +1,5 @@
 name    'foolean-puppet'
-version '0.2.0'
+version '0.2.1'
 
 author  'bennett@foolean.org'
 summary 'Manage puppet agents, master/passenger, multiple developers, and host multiple agent sites'

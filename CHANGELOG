@@ -1,3 +1,8 @@
+2013-12-06 - Bennett Samowich <bennett@foolean.org> - 0.2.1
+- Added dynamic prerun_command and postrun_command handling
+- Moved bulk permissions processing to a post-run.d script
+- Bug fixes and some code cleanup
+
 2013-11-29 - Bennett Samowich <bennett@foolean.org> - 0.2.0
 - Added developer environment handling
 - Added directory tidying in bucket, clientbucket, and report directories

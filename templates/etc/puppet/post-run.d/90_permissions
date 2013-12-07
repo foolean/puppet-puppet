@@ -38,22 +38,24 @@ chmod 2750 "${VARDIR}"
 # Set ownership and permissions on /var/lib/puppet/lib
 if [ -d "${VARDIR}/lib" ]; then
     chown -R ${SYS_USER}:${SYS_GROUP} "${VARDIR}/lib"
-    chmod -R u=rwX,g=rwX,o= "${VARDIR}/lib"
+    find "${VARDIR}/lib" -type f -exec chmod 0660 {} \;
+    find "${VARDIR}/lib" -type d -exec chmod 0770 {} \;
 fi
 
 # Set ownership and permissions on /var/lib/puppet/yaml
 if [ -d "${VARDIR}/yaml" ]; then
     chown -R ${PUPPET_USER}:${PUPPET_GROUP} "${VARDIR}/yaml"
-    chmod -R u=rwX,g=rwX,o= "${VARDIR}/yaml"
+    find "${VARDIR}/yaml" -type f -exec chmod 0660 {} \;
+    find "${VARDIR}/yaml" -type d -exec chmod 0770 {} \;
 fi
 
 # Set ownership to root:puppet
-# Set permissions to u=rwX,g=rX,o=
+# Set permissions to 2750 on directories and 0640 on files
 find /var/lib/puppet/* -type d -prune \
     \( \! -name sites -a \! -name lib -a \! -name yaml \) | \
 while read DIR
 do
     chown -R ${SYS_USER}:${PUPPET_GROUP} "${DIR}"
-    chmod -R u=rwX,g=rX,o= "${DIR}"
     find "${DIR}" -type d -exec chmod 2750 {} \;
+    find "${DIR}" -type f -exec chmod 0640 {} \;
 done

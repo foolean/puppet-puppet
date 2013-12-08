@@ -620,12 +620,14 @@ def process_sites(sites)
             block = block + do_indent(true) + "manifest    = $vardir/sites/" + site + "/development/default/manifests/site.pp\n"
             block = block + do_indent(true) + "manifestdir = $vardir/sites/" + site + "/development/default/manifests\n"
             block = block + do_indent(true) + "modulepath  = $vardir/sites/" + site + "/development/default/manifests\n"
-           
-            data['developers'].sort.map do |developer|
-                block = block + "\n[" + site + "_" + developer.downcase + "]\n"
-                block = block + do_indent(true) + "manifest    = $vardir/sites/" + site + "/development/" + developer.downcase + "/manifests/site.pp\n"
-                block = block + do_indent(true) + "manifestdir = $vardir/sites/" + site + "/development/" + developer.downcase + "/manifests\n"
-                block = block + do_indent(true) + "modulepath  = $vardir/sites/" + site + "/development/" + developer.downcase + "/manifests\n"
+          
+            if ( data['developers'] && data['developers'].length > 0 ) 
+                data['developers'].sort.map do |developer|
+                    block = block + "\n[" + site + "_" + developer.downcase + "]\n"
+                    block = block + do_indent(true) + "manifest    = $vardir/sites/" + site + "/development/" + developer.downcase + "/manifests/site.pp\n"
+                    block = block + do_indent(true) + "manifestdir = $vardir/sites/" + site + "/development/" + developer.downcase + "/manifests\n"
+                    block = block + do_indent(true) + "modulepath  = $vardir/sites/" + site + "/development/" + developer.downcase + "/manifests\n"
+                end
             end
         end
     end

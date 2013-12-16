@@ -492,9 +492,9 @@ class puppet (
     # Ensure that $settings::ssldir is correct
     file { "${settings::ssldir}":
         ensure  => 'directory',
-        owner   => $sys_user,
+        owner   => $puppet_user,
         group   => $puppet_group,
-        mode    => '2750',
+        mode    => '2700',
         require => File[$vardir],
     }
 
@@ -765,8 +765,8 @@ class puppet (
         )
         if ( $cacert ) {
             file { $settings::cacert:
-                mode    => '0640',
-                owner   => $sys_user,
+                mode    => '0600',
+                owner   => $puppet_user,
                 group   => $puppet_group,
                 content => $cacert,
                 require => [
@@ -783,8 +783,8 @@ class puppet (
         )
         if ( $cakey ) {
             file { $settings::cakey:
-                mode    => '0640',
-                owner   => $sys_user,
+                mode    => '0600',
+                owner   => $puppet_user,
                 group   => $puppet_group,
                 content => $cakey,
                 require => [
@@ -801,8 +801,8 @@ class puppet (
         )
         if ( $capass ) {
             file { $settings::capass:
-                mode    => '0640',
-                owner   => $sys_user,
+                mode    => '0600',
+                owner   => $puppet_user,
                 group   => $puppet_group,
                 content => $capass,
                 require => [

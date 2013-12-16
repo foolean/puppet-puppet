@@ -49,10 +49,17 @@ if [ -d "${VARDIR}/yaml" ]; then
     find "${VARDIR}/yaml" -type d -exec chmod 0770 {} \;
 fi
 
+# Set ownership and permissiosn on /var/lib/puppet/ssl
+if [ -d "${VARDIR}/ssl" ]; then
+    chown -R ${PUPPET_USER}:${PUPPET_GROUP} "${VARDIR}/ssl"
+    find "${VARDIR}/ssl" -type f -exec chmod 0600 {} \;
+    find "${VARDIR}/ssl" -type d -exec chmod 2700 {} \;
+fi
+
 # Set ownership to root:puppet
 # Set permissions to 2750 on directories and 0640 on files
 find /var/lib/puppet/* -type d -prune \
-    \( \! -name sites -a \! -name lib -a \! -name yaml \) | \
+    \( \! -name sites -a \! -name lib -a \! -name yaml \! -name ssl \) | \
 while read DIR
 do
     chown -R ${SYS_USER}:${PUPPET_GROUP} "${DIR}"

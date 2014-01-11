@@ -1,3 +1,9 @@
+2013-12-07 - Bennett Samowich <bennett@foolean.org> - 0.2.2
+- Fixed bug that prevented proper processing of site develoeprs
+- Change template variables to use the @var format
+- Added parameter to control SSLVerifyClient when using passenger
+- Better permissions processing
+
 2013-12-06 - Bennett Samowich <bennett@foolean.org> - 0.2.1
 - Added dynamic prerun_command and postrun_command handling
 - Moved bulk permissions processing to a post-run.d script

@@ -335,11 +335,6 @@ install the following steps can be run to bootstrap the puppetmaster.
     puppet agent --test
 
 
-To Do
------
-
-    * Add passenger support
-
 
 License
 -------

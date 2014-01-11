@@ -65,6 +65,12 @@
 #   Hash-of-hashes that denotes the sites the puppetmaster will
 #   provide service for.
 #
+# [*sslverifyclient*]
+#   Sets the SSLVerifyClient option in the Apache2 configuration.  The
+#   possible values are 'require' and 'optional'.  Setting the value to
+#   'optional' will mimic standalone puppetmaster behavior.
+#   The default is 'require'
+#
 # [*tidy*]
 #   Toggle the tidying of the clientbucket directory for agents and the
 #   buckket and reports directories for masters.  The default is true
@@ -250,6 +256,7 @@ class puppet (
     $developers           = [],
     $site_privacy_warning = true,
     $recurse              = false,
+    $sslverifyclient      = 'require',
 )
 {
     # We must have puppet version 2.7 or higher
@@ -260,6 +267,11 @@ class puppet (
     # We must declare ourselves as either an agent or master
     if ( $mode != 'agent' and $mode != 'master' and $mode != 'passenger' ) {
         fail("invalid mode '${mode}', must be 'agent', 'master', or 'passenger'")
+    }
+
+    # sslverifyclient must be either 'require' or 'optional'
+    if ( $sslverifyclient != 'require' and $sslverifyclient != 'optional' ) {
+        fail("invalid sslverifyclient '${sslverifyclient}', must be 'require' or 'optional'")
     }
 
     # Select the client packages

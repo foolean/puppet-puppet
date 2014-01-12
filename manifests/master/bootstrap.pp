@@ -110,8 +110,11 @@ class puppet::master::bootstrap {
 
     # Content for the bootstrapped site.pp file
     $site_pp = "
+stage { 'puppet': before => Stage['main'] }
+
 node '$::fqdn' {
     class { 'puppet':
+        stage => 'puppet',
         mode  => 'master',
         sites => {
             'default' => {
@@ -335,7 +338,25 @@ node '$::fqdn' {
         hasstatus  => true,
         require    => [
             Package[$puppetmaster_packages],
+            Exec['get-development-puppet-class'],
+            Exec['get-production-puppet-module'],
+            Exec['copy-production-master-defaults'],
+            Exec['copy-development-master-defaults'],
             File['/etc/puppet/puppet.conf'],
+            File["${settings::vardir}/sites"],
+            File["${settings::vardir}/sites/default"],
+            File["${settings::vardir}/sites/default/development"],
+            File["${settings::vardir}/sites/default/development/manifests"],
+            File["${settings::vardir}/sites/default/development/modules"],
+            File["${settings::vardir}/sites/default/development/private"],
+            File["${settings::vardir}/sites/default/production"],
+            File["${settings::vardir}/sites/default/production/manifests"],
+            File["${settings::vardir}/sites/default/production/modules"],
+            File["${settings::vardir}/sites/default/production/private"],
+            File["${settings::vardir}/sites/default/production/manifests/site.pp"],
+            File["${settings::vardir}/sites/default/development/manifests/site.pp"],
+            File["${settings::vardir}/sites/default/production/modules/puppet/lib"],
+            File["${settings::vardir}/sites/default/development/modules/puppet/lib"],
         ],
     }
 }

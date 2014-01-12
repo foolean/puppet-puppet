@@ -49,5 +49,6 @@ define puppet::master::passenger::a2ensite {
         command => "a2ensite ${title}",
         onlyif  => "test `apache2ctl -S 2>&1 | grep -c \"/${title}:\"` -eq 0",
         notify  => Exec['puppet-passenger-apache2ctl-graceful'],
+        require => Package[$puppet::passenger_packages],
     }
 }

@@ -49,5 +49,6 @@ define puppet::master::passenger::a2dissite {
         command => "a2dissite ${title}",
         onlyif  => "test `apache2ctl -S 2>&1 | grep -c \"/${title}:\"` -ge 1",
         notify  => Exec['puppet-passenger-apache2ctl-graceful'],
+        require => Package[$puppet::passenger_packages],
     }
 }

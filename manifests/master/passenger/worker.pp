@@ -105,12 +105,18 @@ define puppet::master::passenger::worker (
             mode   => '0750',
         }
 
-        file { "/usr/share/puppet/rack/puppetmasterd_${port}/config.ru":
-            owner   => $puppet::puppet_user,
-            group   => $puppet::apache2_group,
-            mode    => '0440',
-            content => file('/usr/share/puppet/rack/puppetmasterd/config.ru'),
-            require => File["/usr/share/puppet/rack/puppetmasterd_${port}"],
+        $config_ru = file(
+            '/usr/share/puppet/rack/puppetmasterd/config.ru',
+            '/dev/null'
+        )
+        if ( $config_ru ) {
+            file { "/usr/share/puppet/rack/puppetmasterd_${port}/config.ru":
+                owner   => $puppet::puppet_user,
+                group   => $puppet::apache2_group,
+                mode    => '0440',
+                content => $config_ru,
+                require => File["/usr/share/puppet/rack/puppetmasterd_${port}"],
+            }
         }
 
         file { "/usr/share/puppet/rack/puppetmasterd_${port}/public":

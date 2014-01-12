@@ -94,5 +94,7 @@ class puppet::master::defaults {
     $master = {
         autosign => false,
         reports  => 'store,log',
+        ssl_client_header => 'SSL_CLIENT_S_DN',
+        ssl_client_verify_header => 'SSL_CLIENT_VERIFY',
     }
 }

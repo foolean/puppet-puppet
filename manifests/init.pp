@@ -773,6 +773,7 @@ class puppet (
         # Copy in the CA certificate if we have one
         $cacert = file(
             "${settings::vardir}/sites/default/${environment}/private/${::fqdn}/${settings::cacert}",
+            $settings::cacert,
             '/dev/null'
         )
         if ( $cacert ) {
@@ -791,6 +792,7 @@ class puppet (
         # Copy in the CA key if we have one
         $cakey = file(
             "${settings::vardir}/sites/default/${environment}/private/${::fqdn}/${settings::cakey}",
+            $settings::cakey,
             '/dev/null'
         )
         if ( $cakey ) {
@@ -809,6 +811,7 @@ class puppet (
         # Copy in the CA pass if we have one
         $capass = file(
             "${settings::vardir}/sites/default/${environment}/private/${::fqdn}/${settings::capass}",
+            $settings::capass,
             '/dev/null'
         )
         if ( $capass ) {

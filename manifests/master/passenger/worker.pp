@@ -76,13 +76,13 @@ define puppet::master::passenger::worker (
         # configurations in incremental order by their port numbers.  
         if ( $worker > 0 ) {
             $prev = $starting_port + $worker - 1
-            $worker_require = [ File["${puppet::sites_available}/40_puppetmaster_worker_${prev}"] ]
+            $worker_require = [ File["${puppet::sites_available}/40_puppetmaster_worker_${prev}.conf"] ]
         } else {
-            $worker_require = [ File["${puppet::sites_available}/30_puppetmaster_balancer_8140"] ]
+            $worker_require = [ File["${puppet::sites_available}/30_puppetmaster_balancer_8140.conf"] ]
         }
 
         # Copy the worker configuration for this port
-        file { "${puppet::sites_available}/40_puppetmaster_worker_${port}":
+        file { "${puppet::sites_available}/40_puppetmaster_worker_${port}.conf":
             owner   => $puppet::sys_user,
             group   => $puppet::sys_group,
             mode    => '0440',
@@ -92,8 +92,11 @@ define puppet::master::passenger::worker (
         }
 
         # Enable the worker
-        puppet::master::passenger::a2ensite { "40_puppetmaster_worker_${port}":
-            require => File["${puppet::sites_available}/40_puppetmaster_worker_${port}"],
+        puppet::master::passenger::a2ensite { "40_puppetmaster_worker_${port}.conf":
+            require => [
+                $worker_require,
+                File["${puppet::sites_available}/40_puppetmaster_worker_${port}.conf"],
+            ],
             notify  => Exec['puppet-passenger-apache2ctl-graceful'],
         }
 

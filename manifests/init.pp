@@ -604,7 +604,7 @@ class puppet (
             }
 
             # Create the main balancer configuration
-            file { "${sites_available}/30_puppetmaster_balancer_8140":
+            file { "${sites_available}/30_puppetmaster_balancer_8140.conf":
                 owner   => $sys_user,
                 group   => $sys_group,
                 mode    => '0440',
@@ -614,8 +614,9 @@ class puppet (
             }
 
             # Enable the balancer
-            puppet::master::passenger::a2ensite { "30_puppetmaster_balancer_8140":
-                require => File["${puppet::sites_available}/30_puppetmaster_balancer_8140"],
+            puppet::master::passenger::a2ensite { "30_puppetmaster_balancer_8140.conf":
+                require => File["${puppet::sites_available}/30_puppetmaster_balancer_8140.conf"],
+                notify  => Exec['puppet-passenger-apache2ctl-graceful'],
             }
 
             # Create the CA workers

@@ -118,7 +118,7 @@ class puppet::config (
         require => Package[$puppet::client_packages],
     }
 
-    # We don't need the modules, manifests, and templates directory
+    # We don't need the files, modules, manifests, and templates directory
     # in $confdir because we're setting up our own structure under
     # $vardir/sites.  However, puppet seems create a manifests
     # directory in $confdir each time it starts so we'll just symlink
@@ -135,6 +135,10 @@ class puppet::config (
             ensure => 'absent',
             force  => true,
         }
+    }
+    file { "${confdir}/files":
+        ensure => 'absent',
+        force  => true,
     }
     file { "${confdir}/modules":
         ensure => 'absent',

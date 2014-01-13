@@ -331,6 +331,17 @@ node '$::fqdn' {
         ],
     }
 
+    # Make sure that puppet agent is enabled.  
+    if ( versioncmp( $::puppetversion, '3.0.0' ) >= 0 ) {
+        file { $settings::agent_disabled_lockfile:
+            ensure => 'absent'
+        }
+    } else {
+        file { $settings::puppetdlockfile:
+            ensure => 'absent'
+        }
+    }
+
     # Make sure we restart the service after updating the configuration files
     service { 'puppetmaster':
         ensure     => 'running',

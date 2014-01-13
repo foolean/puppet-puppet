@@ -639,13 +639,28 @@ class puppet (
             }
 
             # Debian creates a default site named 'puppetmaster' that don't use
-            puppet::master::passenger::a2dissite { 'puppetmaster': }
+            puppet::master::passenger::a2dissite { 'puppetmaster':
+                require => Package[$passenger_packages],
+            }
 
             # Make sure the required Apache modules are loaded
-            puppet::master::passenger::a2enmod { 'ssl': }
-            puppet::master::passenger::a2enmod { 'proxy': }
-            puppet::master::passenger::a2enmod { 'proxy_balancer': }
-            puppet::master::passenger::a2enmod { 'proxy_http': }
+            puppet::master::passenger::a2enmod { 'ssl':
+                require => Package[$passenger_packages],
+            }
+            puppet::master::passenger::a2enmod { 'proxy':
+                require => Package[$passenger_packages],
+            }
+            puppet::master::passenger::a2enmod { 'proxy_balancer':
+                require => Package[$passenger_packages],
+            }
+            puppet::master::passenger::a2enmod { 'proxy_http':
+                require => Package[$passenger_packages],
+            }
+            if ( $::operatingsystem == 'ubuntu' ) {
+                puppet::master::passenger::a2enmod { 'lbmethod_byrequests':
+                    require => Package[$passenger_packages],
+                }
+            }
         } else {
             $master_start = true
         }

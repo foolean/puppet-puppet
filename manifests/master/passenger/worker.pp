@@ -108,16 +108,18 @@ define puppet::master::passenger::worker (
             mode   => '0750',
         }
 
-        $config_ru = file(
-            '/usr/share/puppet/rack/puppetmasterd/config.ru',
-            '/dev/null'
-        )
+        $config_ru = $::operatingsystem ? {
+            'debian' => '/usr/share/puppet/rack/puppetmasterd/config.ru',
+            'ubuntu' => '/usr/share/puppet/rack/puppetmasterd/config.ru',
+            default  => false,
+        }
+
         if ( $config_ru ) {
             file { "/usr/share/puppet/rack/puppetmasterd_${port}/config.ru":
                 owner   => $puppet::puppet_user,
                 group   => $puppet::apache2_group,
                 mode    => '0440',
-                content => $config_ru,
+                ensure  => $config_ru,
                 require => File["/usr/share/puppet/rack/puppetmasterd_${port}"],
             }
         }

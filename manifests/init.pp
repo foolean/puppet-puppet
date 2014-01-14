@@ -641,24 +641,32 @@ class puppet (
             # Debian creates a default site named 'puppetmaster' that don't use
             puppet::master::passenger::a2dissite { 'puppetmaster':
                 require => Package[$passenger_packages],
+                before  => Exec['puppet-passenger-apache2ctl-graceful'],
             }
 
             # Make sure the required Apache modules are loaded
             puppet::master::passenger::a2enmod { 'ssl':
                 require => Package[$passenger_packages],
+                before  => Exec['puppet-passenger-apache2ctl-graceful'],
             }
             puppet::master::passenger::a2enmod { 'proxy':
                 require => Package[$passenger_packages],
+                before  => Exec['puppet-passenger-apache2ctl-graceful'],
             }
             puppet::master::passenger::a2enmod { 'proxy_balancer':
                 require => Package[$passenger_packages],
+                before  => Exec['puppet-passenger-apache2ctl-graceful'],
             }
             puppet::master::passenger::a2enmod { 'proxy_http':
                 require => Package[$passenger_packages],
+                before  => Exec['puppet-passenger-apache2ctl-graceful'],
             }
+            # This is really for Apache2 v2.4 or greater
+            # but I'm trying to keep this class autonomous.
             if ( $::operatingsystem == 'ubuntu' ) {
                 puppet::master::passenger::a2enmod { 'lbmethod_byrequests':
                     require => Package[$passenger_packages],
+                    before  => Exec['puppet-passenger-apache2ctl-graceful'],
                 }
             }
         } else {
@@ -887,16 +895,40 @@ class puppet (
             }
         } else {
             service { 'puppetmaster':
-                ensure => 'stopped',
-                enable => false,
+                ensure  => 'stopped',
+                enable  => false,
+                require => [
+                    Package[$puppetmaster_packages],
+                    File[$settings::bucketdir],
+                    File[$settings::cacert],
+                    File[$settings::cakey],
+                    File[$settings::capass],
+                    File[$settings::clientbucketdir],
+                    File[$settings::client_datadir],
+                    File[$settings::clientyamldir],
+                    File[$settings::libdir],
+                    File[$settings::module_working_dir],
+                    File[$settings::reportdir],
+                    File[$settings::rrddir],
+                    File[$settings::server_datadir],
+                    File[$settings::ssldir],
+                    File[$settings::statedir],
+                    File[$settings::yamldir],
+                    File[$vardir],
+                    File["${vardir}/facts"],
+                    File["${vardir}/sites"],
+                ],
             }
 
             # Exec to reload Apache if the puppet configuration changes
             exec { 'puppet-passenger-apache2ctl-graceful':
-                path      => [ '/usr/sbin' ],
-                command   => 'apache2ctl graceful',
+                path        => [ '/bin', '/usr/bin', '/sbin', '/usr/sbin' ],
+                command     => 'apache2ctl graceful',
                 refreshonly => true,
-                subscribe => [
+                require     => [
+                   Service['puppetmaster'],
+                ],
+                subscribe   => [
                     File["${confdir}/auth.conf"],
                     File["${confdir}/fileserver.conf"],
                     File["${confdir}/puppet.conf"],

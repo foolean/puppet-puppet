@@ -47,7 +47,7 @@ define puppet::master::passenger::a2dissite {
     exec { "puppet-passenger-a2dissite-${title}":
         path => [ '/bin', '/usr/bin', '/usr/sbin' ],
         command => "a2dissite ${title}",
-        onlyif  => "test `apache2ctl -S 2>&1 | grep -c \"/${title}:\"` -ge 1",
+        onlyif  => "test -L /etc/apache2/sites-enabled/${title}.conf",
         notify  => Exec['puppet-passenger-apache2ctl-graceful'],
         require => Package[$puppet::passenger_packages],
     }

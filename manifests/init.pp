@@ -687,7 +687,7 @@ class puppet (
             }
 
             file { '/usr/share/puppet/rack/puppetmasterd':
-                ensure  => 'diretory',
+                ensure  => 'directory',
                 owner   => $puppet_user,
                 group   => $apache2_group,
 		require => Package[$passenger_packages],

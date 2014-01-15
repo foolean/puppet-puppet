@@ -590,6 +590,22 @@ class puppet (
                 }
             }
 
+            # Debian Wheezy's puppetmaster_package attempts to start Apache2 and fails because
+            # webbrick is still running.  When this happens, the rest of this class fails due
+            # to the dependency on the package.  This results in webbrick being disabled and
+            # passenger not being properly configured.  This exec is an attempt to trap the
+            # the error so rest of the class will run successfully and finish the configuration.
+            if ( $::operatingsystem == 'debian' ) {
+                if ( versioncmp( $::operatingsystemrelease, '7.0' ) >= 0 ) {
+                    exec { 'install-passenger':
+                        path    => [ '/bin', '/usr/bin', '/sbin', '/usr/sbin' ],
+                        command => '/usr/bin/apt-get -q -y -o DPkg::Options::=--force-confold install puppetmaster-passenger || echo "START=yes" >> /etc/default/puppetmaster; /etc/init.d/puppetmaster restart',
+                        unless  => 'test `dpkg --get-selections puppetmaster-passenger | grep -c "puppetmaster-passenger"` -ge 1',
+                        before  => Package[$passenger_packages],
+                    }
+                }
+            }
+
             # Make sure the passenger packages are installed
             package { $passenger_packages:
                 ensure => 'installed'
@@ -668,6 +684,15 @@ class puppet (
                     require => Package[$passenger_packages],
                     before  => Exec['puppet-passenger-apache2ctl-graceful'],
                 }
+            }
+
+            file { '/usr/share/puppet/rack/puppetmasterd':
+                ensure  => 'diretory',
+                owner   => $puppet_user,
+                group   => $apache2_group,
+		require => Package[$passenger_packages],
+		before  => Exec['puppet-passenger-apache2ctl-graceful'],
+                mode    => 0750,
             }
         } else {
             $master_start = true

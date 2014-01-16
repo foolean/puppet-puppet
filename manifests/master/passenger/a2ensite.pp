@@ -44,11 +44,17 @@
 #   limitations under the License.
 #
 define puppet::master::passenger::a2ensite {
-    exec { "puppet-passenger-a2ensite-${title}":
-        path => [ '/bin', '/usr/bin', '/usr/sbin' ],
-        command => "a2ensite ${title}",
-        onlyif  => "test `apache2ctl -S 2>&1 | grep -c \"/${title}:\"` -eq 0",
-        notify  => Exec['puppet-passenger-apache2ctl-graceful'],
-        require => Package[$puppet::passenger_packages],
+
+    # a2ensite is Debian and Ubuntu specific
+    case $::operatingsystem {
+        'debian','ubuntu': {
+            exec { "puppet-passenger-a2ensite-${title}":
+                path => [ '/bin', '/usr/bin', '/usr/sbin' ],
+                command => "a2ensite ${title}",
+                onlyif  => "test `apache2ctl -S 2>&1 | grep -c \"/${title}:\"` -eq 0",
+                notify  => Exec['puppet-passenger-apache2ctl-graceful'],
+                require => Package[$puppet::passenger_packages],
+            }
+        }
     }
 }

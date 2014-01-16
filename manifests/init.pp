@@ -322,12 +322,20 @@ class puppet (
 
     # apache2 group
     $apache2_group = $::operatingsystem ? {
-        default => 'www-data'
+        'centos' => 'apache',
+        default  => 'www-data'
+    }
+
+    # Path to apache's log directory
+    $apache2_logdir = $::operatingsystem ? {
+        'centos' => '/var/log/httpd',
+        default  => '/var/log/apache2',
     }
 
     # Path to apache2's sites-available directory
     $sites_available = $::operatingsystem ? {
-        default => '/etc/apache2/sites-available'
+        'centos' => '/etc/httpd/conf.d',
+        default  => '/etc/apache2/sites-available'
     }
 
     # Path to the puppet defaults files
@@ -342,6 +350,20 @@ class puppet (
         'debian' => '/etc/default/puppetmaster',
         'ubuntu' => '/etc/default/puppetmaster',
         default  => false
+    }
+
+    # Path to the packaged version of passenger's config.ru
+    $config_ru = $::operatingsystem ? {
+        'centos' => '/usr/share/puppet/ext/rack/files/config.ru',
+        'debian' => '/usr/share/puppet/rack/puppetmasterd/config.ru',
+        'ubuntu' => '/usr/share/puppet/rack/puppetmasterd/config.ru',
+        default  => false,
+    }
+
+    # Name of the Apache controler utility
+    $apache2ctl = $::operatingsystem ? {
+        'centos' => 'apachectl',
+        default  => 'apache2ctl',
     }
 
     # Make sure the client packages are installed
@@ -582,6 +604,17 @@ class puppet (
 
             # Packages required for running passenger
             case $::operatingsystem {
+                'centos': {
+                    $passenger_packages = [ 'mod_passenger' ]
+
+                    # CentOS doesn't include mod_ssl when installing mod_passenger
+                    exec { 'puppet_install_mod_ssl':
+                        path    => [ '/bin', '/usr/bin' ],
+                        command => 'yum install -y mod_ssl',
+                        require => Package[$passenger_packages], 
+                        before  => Exec['puppet-passenger-apache2ctl-graceful'],
+                    }
+                }
                 'debian','ubuntu': {
                     $passenger_packages = [ 'puppetmaster-passenger' ]
                 }
@@ -686,6 +719,14 @@ class puppet (
                 }
             }
 
+            file { '/usr/share/puppet/rack':
+                ensure  => 'directory',
+                owner   => $puppet_user,
+                group   => $apache2_group,
+		require => Package[$passenger_packages],
+		before  => Exec['puppet-passenger-apache2ctl-graceful'],
+                mode    => 0750,
+            }
             file { '/usr/share/puppet/rack/puppetmasterd':
                 ensure  => 'directory',
                 owner   => $puppet_user,
@@ -948,7 +989,7 @@ class puppet (
             # Exec to reload Apache if the puppet configuration changes
             exec { 'puppet-passenger-apache2ctl-graceful':
                 path        => [ '/bin', '/usr/bin', '/sbin', '/usr/sbin' ],
-                command     => 'apache2ctl graceful',
+                command     => "${apache2ctl} graceful",
                 refreshonly => true,
                 require     => [
                    Service['puppetmaster'],

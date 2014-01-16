@@ -44,11 +44,17 @@
 #   limitations under the License.
 #
 define puppet::master::passenger::a2enmod {
-    exec { "puppet-passenger-a2enmod-${title}":
-        path => [ '/bin', '/usr/bin', '/usr/sbin' ],
-        command => "a2enmod ${title}",
-        onlyif  => "test `apache2ctl -M 2>&1 | grep -c \"${title}\"` -eq 0",
-        notify  => Exec['puppet-passenger-apache2ctl-graceful'],
-        require => Package[$puppet::passenger_packages],
+
+    # a2enmod is Debian and Ubuntu specific
+    case $::operatingsystem {
+        'debian','ubuntu': {
+            exec { "puppet-passenger-a2enmod-${title}":
+                path => [ '/bin', '/usr/bin', '/usr/sbin' ],
+                command => "a2enmod ${title}",
+                onlyif  => "test `apache2ctl -M 2>&1 | grep -c \"${title}\"` -eq 0",
+                notify  => Exec['puppet-passenger-apache2ctl-graceful'],
+                require => Package[$puppet::passenger_packages],
+            }
+        }
     }
 }

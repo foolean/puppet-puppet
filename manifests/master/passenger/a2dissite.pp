@@ -45,13 +45,27 @@
 #
 define puppet::master::passenger::a2dissite {
 
-    # Apache 2.4 will append '.conf' to the site name so we must
-    # test for both apachesite and apachesite.conf formats.
-    exec { "puppet-passenger-a2dissite-${title}":
-        path => [ '/bin', '/usr/bin', '/usr/sbin' ],
-        command => "a2dissite ${title}",
-        onlyif  => "test -L /etc/apache2/sites-enabled/${title}.conf || test -L /etc/apache2/sites-enabled/${title}",
-        notify  => Exec['puppet-passenger-apache2ctl-graceful'],
-        require => Package[$puppet::passenger_packages],
+    # a2dissite is Debian and Ubuntu specific
+    case $::operatingsystem {
+        'debian','ubuntu': {
+            # Apache 2.4 will append '.conf' to the site name so we must
+            # test for both apachesite and apachesite.conf formats.
+            exec { "puppet-passenger-a2dissite-${title}":
+                path => [ '/bin', '/usr/bin', '/usr/sbin' ],
+                command => "a2dissite ${title}",
+                onlyif  => "test -L /etc/apache2/sites-enabled/${title}.conf || test -L /etc/apache2/sites-enabled/${title}",
+                notify  => Exec['puppet-passenger-apache2ctl-graceful'],
+                require => Package[$puppet::passenger_packages],
+            }
+        }
+        'centos': {
+            exec { "puppet-passenger-a2dissite-${title}":
+                path => [ '/bin', '/usr/bin', '/usr/sbin' ],
+                command => "rm /etc/httpd/conf.d/${title}.conf",
+                onlyif  => "test -f /etc/httpd/conf.d/${title}.conf",
+                notify  => Exec['puppet-passenger-apache2ctl-graceful'],
+                require => Package[$puppet::passenger_packages],
+            }
+        }
     }
 }

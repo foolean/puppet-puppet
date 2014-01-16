@@ -611,6 +611,7 @@ class puppet (
                     exec { 'puppet_install_mod_ssl':
                         path    => [ '/bin', '/usr/bin' ],
                         command => 'yum install -y mod_ssl',
+                        unless  => 'test `rpm -qa mod_ssl | grep -c "^mod_ssl"` -eq 1',
                         require => Package[$passenger_packages], 
                         before  => Exec['puppet-passenger-apache2ctl-graceful'],
                     }

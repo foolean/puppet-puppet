@@ -111,6 +111,7 @@ define puppet::master::passenger::worker (
         $config_ru = $::operatingsystem ? {
             'centos' => '/usr/share/puppet/ext/rack/files/config.ru',
             'debian' => '/usr/share/puppet/rack/puppetmasterd/config.ru',
+            'fedora' => '/usr/share/puppet/ext/rack/files/config.ru',
             'ubuntu' => '/usr/share/puppet/rack/puppetmasterd/config.ru',
             default  => false,
         }

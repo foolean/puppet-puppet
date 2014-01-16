@@ -323,18 +323,21 @@ class puppet (
     # apache2 group
     $apache2_group = $::operatingsystem ? {
         'centos' => 'apache',
+        'fedora' => 'apache',
         default  => 'www-data'
     }
 
     # Path to apache's log directory
     $apache2_logdir = $::operatingsystem ? {
         'centos' => '/var/log/httpd',
+        'fedora' => '/var/log/httpd',
         default  => '/var/log/apache2',
     }
 
     # Path to apache2's sites-available directory
     $sites_available = $::operatingsystem ? {
         'centos' => '/etc/httpd/conf.d',
+        'fedora' => '/etc/httpd/conf.d',
         default  => '/etc/apache2/sites-available'
     }
 
@@ -356,6 +359,7 @@ class puppet (
     $config_ru = $::operatingsystem ? {
         'centos' => '/usr/share/puppet/ext/rack/files/config.ru',
         'debian' => '/usr/share/puppet/rack/puppetmasterd/config.ru',
+        'fedora' => '/usr/share/puppet/ext/rack/files/config.ru',
         'ubuntu' => '/usr/share/puppet/rack/puppetmasterd/config.ru',
         default  => false,
     }
@@ -363,6 +367,7 @@ class puppet (
     # Name of the Apache controler utility
     $apache2ctl = $::operatingsystem ? {
         'centos' => 'apachectl',
+        'fedora' => 'apachectl',
         default  => 'apache2ctl',
     }
 
@@ -619,6 +624,27 @@ class puppet (
                 'debian','ubuntu': {
                     $passenger_packages = [ 'puppetmaster-passenger' ]
                 }
+                'fedora': {
+                    $passenger_packages = [ 'mod_passenger' ]
+
+                    # Fedora doesn't include mod_ssl when installing mod_passenger
+                    exec { 'puppet_install_mod_ssl':
+                        path    => [ '/bin', '/usr/bin' ],
+                        command => 'yum install -y mod_ssl',
+                        unless  => 'test `rpm -qa mod_ssl | grep -c "^mod_ssl"` -eq 1',
+                        require => Package[$passenger_packages], 
+                        before  => Exec['puppet-passenger-apache2ctl-graceful'],
+                    }
+
+                    # Fedora doesn't include mod_proxy_html when installing mod_passenger
+                    exec { 'puppet_install_mod_proxy_html':
+                        path    => [ '/bin', '/usr/bin' ],
+                        command => 'yum install -y mod_proxy_html',
+                        unless  => 'test `rpm -qa mod_proxy_html | grep -c "^mod_proxy_html"` -eq 1',
+                        require => Package[$passenger_packages], 
+                        before  => Exec['puppet-passenger-apache2ctl-graceful'],
+                    }
+                }
                 default: {
                     fail("${title} passenger not configured for ${::operatingsystem}, exiting")
                 }
@@ -744,7 +770,7 @@ class puppet (
         $dev_packages = $::operatingsystem ? {
             'centos'   => [ 'rubygem-puppet-lint', 'vim-puppet' ],
             'debian'   => [ 'puppet-lint', 'vim-puppet' ],
-            'fedora'   => [ 'rubygem-puppet-lint', 'vim-puppet' ],
+            'fedora'   => [ 'rubygem-puppet-lint' ],
             'opensuse' => false,
             'redhat'   => [ 'rubygem-puppet-lint', 'vim-puppet' ],
             'ubuntu'   => [ 'puppet-lint', 'vim-puppet' ],
@@ -987,6 +1013,23 @@ class puppet (
                 ],
             }
 
+            # On fedora, it was noticed that Apache was not started by default
+            # which causes the graceful reload to fail.  This is a kludge to
+            # ensure that Apache is running so the graceful command, along with
+            # the rest of this class will succeed.
+            exec { 'puppet-passenger-apache2ctl-start':
+                path        => [ '/bin', '/usr/bin', '/sbin', '/usr/sbin' ],
+                command     => "${apache2ctl} start",
+                unless      => "${apache2ctl} status",
+                before      => Exec['puppet-passenger-apache2ctl-graceful'],
+                require     => [
+                   Service['puppetmaster'],
+                    File["${confdir}/auth.conf"],
+                    File["${confdir}/fileserver.conf"],
+                    File["${confdir}/puppet.conf"],
+                ],
+            }
+                
             # Exec to reload Apache if the puppet configuration changes
             exec { 'puppet-passenger-apache2ctl-graceful':
                 path        => [ '/bin', '/usr/bin', '/sbin', '/usr/sbin' ],

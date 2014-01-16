@@ -178,7 +178,7 @@ operating systems.  The current list of supported operating systems is:
     +----------+-----------+--------+--------------+-----------+
     |  OS      | Bootstrap | Puppet | Puppetmaster | Passenger |
     +----------+-----------+--------+--------------+-----------+
-    | CentOS   |    yes    |  yes   |     yes      |     No    |
+    | CentOS   |    yes    |  yes   |     yes      |    Yes    |
     | Debian   |    yes    |  yes   |     yes      |    Yes    |
     | Fedora   |    yes    |  yes   |     yes      |     No    |
     | OpenSUSE |    yes    |  yes   |     yes      |     No    |

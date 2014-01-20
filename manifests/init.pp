@@ -310,6 +310,19 @@ class puppet (
         default => 'puppet',
     }
 
+    # The name of the puppetmaster service
+    $puppetmaster_service = $::operatingsystem ? {
+        'opensuse' => 'puppetmasterd',
+        default    => 'puppetmaster',
+    }
+
+    # The command to start the puppetmaster service
+    $puppetmaster_status = $::operatingsystem ? {
+        'fedora'   => "service ${puppetmaster_service} status",
+        'opensuse' => "systemctl status ${puppetmaster_service}",
+        default    => "/etc/init.d/${puppetmaster_service} status",
+    }
+
     # confdir
     $confdir = $::operatingsystem ? {
        default  => '/etc/puppet',
@@ -322,9 +335,10 @@ class puppet (
 
     # apache2 group
     $apache2_group = $::operatingsystem ? {
-        'centos' => 'apache',
-        'fedora' => 'apache',
-        default  => 'www-data'
+        'centos'   => 'apache',
+        'fedora'   => 'apache',
+        'opensuse' => 'www',
+        default    => 'www-data'
     }
 
     # Path to apache's log directory
@@ -336,9 +350,10 @@ class puppet (
 
     # Path to apache2's sites-available directory
     $sites_available = $::operatingsystem ? {
-        'centos' => '/etc/httpd/conf.d',
-        'fedora' => '/etc/httpd/conf.d',
-        default  => '/etc/apache2/sites-available'
+        'centos'   => '/etc/httpd/conf.d',
+        'fedora'   => '/etc/httpd/conf.d',
+        'opensuse' => '/etc/apache2/conf.d',
+        default    => '/etc/apache2/sites-available'
     }
 
     # Path to the puppet defaults files
@@ -357,11 +372,12 @@ class puppet (
 
     # Path to the packaged version of passenger's config.ru
     $config_ru = $::operatingsystem ? {
-        'centos' => '/usr/share/puppet/ext/rack/files/config.ru',
-        'debian' => '/usr/share/puppet/rack/puppetmasterd/config.ru',
-        'fedora' => '/usr/share/puppet/ext/rack/files/config.ru',
-        'ubuntu' => '/usr/share/puppet/rack/puppetmasterd/config.ru',
-        default  => false,
+        'centos'   => '/usr/share/puppet/ext/rack/files/config.ru',
+        'debian'   => '/usr/share/puppet/rack/puppetmasterd/config.ru',
+        'fedora'   => '/usr/share/puppet/ext/rack/files/config.ru',
+        'opensuse' => '/usr/share/puppet/ext/rack/files/config.ru',
+        'ubuntu'   => '/usr/share/puppet/rack/puppetmasterd/config.ru',
+        default    => false,
     }
 
     # Name of the Apache controler utility
@@ -644,6 +660,9 @@ class puppet (
                         require => Package[$passenger_packages], 
                         before  => Exec['puppet-passenger-apache2ctl-graceful'],
                     }
+                }
+                'opensuse': {
+                    $passenger_packages = [ 'rubygem-passenger-apache2' ]
                 }
                 default: {
                     fail("${title} passenger not configured for ${::operatingsystem}, exiting")
@@ -975,7 +994,7 @@ class puppet (
 
         # Make sure the service is running if it's supposed to be
         if ( $master_start ) {
-            service { 'puppetmaster':
+            service { $puppetmaster_service:
                 ensure    => 'running',
                 enable    => true,
                 subscribe => [
@@ -987,10 +1006,12 @@ class puppet (
                 ],
             }
         } else {
-            service { 'puppetmaster':
-                ensure  => 'stopped',
-                enable  => false,
-                require => [
+            service { $puppetmaster_service:
+                ensure    => 'stopped',
+                enable    => false,
+                hasstatus => true,
+                status    => $puppetmaster_status,
+                require   => [
                     Package[$puppetmaster_packages],
                     File[$settings::bucketdir],
                     File[$settings::cacert],
@@ -1023,7 +1044,7 @@ class puppet (
                 unless      => "${apache2ctl} status",
                 before      => Exec['puppet-passenger-apache2ctl-graceful'],
                 require     => [
-                   Service['puppetmaster'],
+                   Service[$puppetmaster_service],
                     File["${confdir}/auth.conf"],
                     File["${confdir}/fileserver.conf"],
                     File["${confdir}/puppet.conf"],
@@ -1036,7 +1057,7 @@ class puppet (
                 command     => "${apache2ctl} graceful",
                 refreshonly => true,
                 require     => [
-                   Service['puppetmaster'],
+                   Service[$puppetmaster_service],
                 ],
                 subscribe   => [
                     File["${confdir}/auth.conf"],

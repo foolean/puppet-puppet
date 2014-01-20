@@ -79,6 +79,12 @@ class puppet::master::bootstrap {
         }
     }
 
+    # The name of the puppetmaster service
+    $puppetmaster_service = $::operatingsystem ? {
+        'opensuse' => 'puppetmasterd',
+        default    => 'puppetmaster',
+    }
+
     # Content for the bootstrapped puppet.conf file
     $puppet_conf = "
 [main]
@@ -345,6 +351,7 @@ node '$::fqdn' {
     # Make sure we restart the service after updating the configuration files
     service { 'puppetmaster':
         ensure     => 'running',
+        name       => $puppetmaster_service,
         hasrestart => true,
         hasstatus  => true,
         require    => [

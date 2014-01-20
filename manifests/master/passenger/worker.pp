@@ -109,11 +109,12 @@ define puppet::master::passenger::worker (
         }
 
         $config_ru = $::operatingsystem ? {
-            'centos' => '/usr/share/puppet/ext/rack/files/config.ru',
-            'debian' => '/usr/share/puppet/rack/puppetmasterd/config.ru',
-            'fedora' => '/usr/share/puppet/ext/rack/files/config.ru',
-            'ubuntu' => '/usr/share/puppet/rack/puppetmasterd/config.ru',
-            default  => false,
+            'centos'   => '/usr/share/puppet/ext/rack/files/config.ru',
+            'debian'   => '/usr/share/puppet/rack/puppetmasterd/config.ru',
+            'fedora'   => '/usr/share/puppet/ext/rack/files/config.ru',
+            'opensuse' => '/usr/share/puppet/ext/rack/files/config.ru',
+            'ubuntu'   => '/usr/share/puppet/rack/puppetmasterd/config.ru',
+            default    => false,
         }
 
         if ( $config_ru ) {
@@ -149,6 +150,7 @@ define puppet::master::passenger::worker (
             workers       => $workers,
             log_level     => $log_level,
             starting_port => $starting_port,
+            before        => Service[$puppet::puppetmaster_service],
         }
     }
 }

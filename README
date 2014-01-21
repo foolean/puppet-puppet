@@ -180,11 +180,48 @@ operating systems.  The current list of supported operating systems is:
     +----------+-----------+--------+--------------+-----------+
     | CentOS   |    yes    |  yes   |     yes      |    Yes    |
     | Debian   |    yes    |  yes   |     yes      |    Yes    |
-    | Fedora   |    yes    |  yes   |     yes      |     No    |
-    | OpenSUSE |    yes    |  yes   |     yes      |     No    |
+    | Fedora   |    yes    |  yes   |     yes      |    Yes    |
+    | OpenSUSE |    yes    |  yes   |     yes      |    Yes    |
     | RedHat   |    yes    |  yes   |     yes      |     No    |
     | Ubuntu   |    yes    |  yes   |     yes      |    Yes    |
     +----------+-----------+--------+--------------+-----------+
+
+Notes:
+* General:
+  Puppet doesn't seem to be able to both stop puppetmaster and start
+  Apache in the same run.  Just manually start Apache after the first
+  puppet run when switching to passenger.  This should get fixed in a
+  future release.
+
+* OpenSUSE:
+  OpenSUSE requires that the modules be added to the APACHE_MODULES
+  variable in /etc/sysconfig/apache2.
+
+  The following modules are required for Puppet's Passenger:
+    + headers
+    + lbmethod_byrequests
+    + passenger
+    + proxy
+    + proxy_balancer
+    + proxy_http
+    + slotmem_shm
+    + socache_shmcb
+    + version
+
+* RedHat:
+  The 'rubygems' module is not in the EPEL repository and appears
+  to not be on the RedHat DVD either.  It's possible that RedHat
+  will run fine with a proper subscription (which I don't have).
+
+
+
+SELinux
+-------
+
+The passenger configuration created by this  module does not function properly
+under SELinux at this time.  This can be fixed by dropping back to permissive
+mode and running audit2allow after a client runs against the server.  SELinux
+support will be addressed in a future release.
 
 
 
@@ -333,6 +370,13 @@ install the following steps can be run to bootstrap the puppetmaster.
 
     # run puppet again to configure the system as a puppetmaster
     puppet agent --test
+
+
+
+To Do
+-----
+
+* Add SELinux support
 
 
 

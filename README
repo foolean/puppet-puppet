@@ -182,7 +182,7 @@ operating systems.  The current list of supported operating systems is:
     | Debian   |    yes    |  yes   |     yes      |    Yes    |
     | Fedora   |    yes    |  yes   |     yes      |    Yes    |
     | OpenSUSE |    yes    |  yes   |     yes      |    Yes    |
-    | RedHat   |    yes    |  yes   |     yes      |     No    |
+    | RedHat   |    yes    |  yes   |     yes      |    Yes    |
     | Ubuntu   |    yes    |  yes   |     yes      |    Yes    |
     +----------+-----------+--------+--------------+-----------+
 
@@ -209,9 +209,18 @@ Notes:
     + version
 
 * RedHat:
-  The 'rubygems' module is not in the EPEL repository and appears
-  to not be on the RedHat DVD either.  It's possible that RedHat
-  will run fine with a proper subscription (which I don't have).
+  There are a number of packages that are required to run passenger that
+  are not in the EPEL or RepoForge repositories.  They are however, in
+  the RedHat subscription repository.  If you are experimenting with the
+  RedHat operating system and do not have a subscription, you can install
+  the missing packages from a CentOS repository.
+
+  The missing packages are:
+    + rubygems
+    + ruby-docs
+    + ruby-rdoc
+    + ruby-irb
+    + rubygem-rake
 
 
 

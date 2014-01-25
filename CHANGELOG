@@ -1,3 +1,6 @@
+2014-01-25 - Bennett Samowich <bennett@foolean.org> - 0.2.4
+- Fixed RedHat passenger support
+
 2014-01-15 - Bennett Samowich <bennett@foolean.org> - 0.2.3
 - Fixed bootstrap code
 - Fixed passenger related code so that it runs correctly on the first run

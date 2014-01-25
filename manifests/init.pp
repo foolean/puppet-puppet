@@ -338,6 +338,7 @@ class puppet (
         'centos'   => 'apache',
         'fedora'   => 'apache',
         'opensuse' => 'www',
+        'redhat'   => 'apache',
         default    => 'www-data'
     }
 
@@ -345,6 +346,7 @@ class puppet (
     $apache2_logdir = $::operatingsystem ? {
         'centos' => '/var/log/httpd',
         'fedora' => '/var/log/httpd',
+        'redhat' => '/var/log/httpd',
         default  => '/var/log/apache2',
     }
 
@@ -353,6 +355,7 @@ class puppet (
         'centos'   => '/etc/httpd/conf.d',
         'fedora'   => '/etc/httpd/conf.d',
         'opensuse' => '/etc/apache2/conf.d',
+        'redhat'   => '/etc/httpd/conf.d',
         default    => '/etc/apache2/sites-available'
     }
 
@@ -376,6 +379,7 @@ class puppet (
         'debian'   => '/usr/share/puppet/rack/puppetmasterd/config.ru',
         'fedora'   => '/usr/share/puppet/ext/rack/files/config.ru',
         'opensuse' => '/usr/share/puppet/ext/rack/files/config.ru',
+        'redhat'   => '/usr/share/puppet/ext/rack/files/config.ru',
         'ubuntu'   => '/usr/share/puppet/rack/puppetmasterd/config.ru',
         default    => false,
     }
@@ -384,6 +388,7 @@ class puppet (
     $apache2ctl = $::operatingsystem ? {
         'centos' => 'apachectl',
         'fedora' => 'apachectl',
+        'redhat' => 'apachectl',
         default  => 'apache2ctl',
     }
 

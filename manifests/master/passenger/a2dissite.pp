@@ -58,7 +58,7 @@ define puppet::master::passenger::a2dissite {
                 require => Package[$puppet::passenger_packages],
             }
         }
-        'centos': {
+        'centos','redhat','fedora': {
             exec { "puppet-passenger-a2dissite-${title}":
                 path => [ '/bin', '/usr/bin', '/usr/sbin' ],
                 command => "rm /etc/httpd/conf.d/${title}.conf",

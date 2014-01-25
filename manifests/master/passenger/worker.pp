@@ -113,6 +113,7 @@ define puppet::master::passenger::worker (
             'debian'   => '/usr/share/puppet/rack/puppetmasterd/config.ru',
             'fedora'   => '/usr/share/puppet/ext/rack/files/config.ru',
             'opensuse' => '/usr/share/puppet/ext/rack/files/config.ru',
+            'redhat'   => '/usr/share/puppet/ext/rack/files/config.ru',
             'ubuntu'   => '/usr/share/puppet/rack/puppetmasterd/config.ru',
             default    => false,
         }

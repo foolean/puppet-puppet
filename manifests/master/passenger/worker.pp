@@ -108,24 +108,18 @@ define puppet::master::passenger::worker (
             mode   => '0750',
         }
 
-        $config_ru = $::operatingsystem ? {
-            'centos'   => '/usr/share/puppet/ext/rack/files/config.ru',
-            'debian'   => '/usr/share/puppet/rack/puppetmasterd/config.ru',
-            'fedora'   => '/usr/share/puppet/ext/rack/files/config.ru',
-            'opensuse' => '/usr/share/puppet/ext/rack/files/config.ru',
-            'redhat'   => '/usr/share/puppet/ext/rack/files/config.ru',
-            'ubuntu'   => '/usr/share/puppet/rack/puppetmasterd/config.ru',
-            default    => false,
-        }
-
-        if ( $config_ru ) {
-            file { "/usr/share/puppet/rack/puppetmasterd_${port}/config.ru":
-                owner   => $puppet::puppet_user,
-                group   => $puppet::apache2_group,
-                mode    => '0440',
-                ensure  => $config_ru,
-                require => File["/usr/share/puppet/rack/puppetmasterd_${port}"],
-            }
+        # Create the config.ru file for this worker
+        file { "/usr/share/puppet/rack/puppetmasterd_${port}/config.ru":
+            owner   => $puppet::puppet_user,
+            group   => $puppet::apache2_group,
+            mode    => '0440',
+            content => file(
+                '/usr/share/puppet/rack/puppetmasterd/config.ru',
+                '/usr/share/puppet/ext/rack/files/config.ru',
+                '/usr/share/puppet/ext/rack/config.ru',
+                '/dev/null' 
+            ),
+            require => File["/usr/share/puppet/rack/puppetmasterd_${port}"],
         }
 
         file { "/usr/share/puppet/rack/puppetmasterd_${port}/public":

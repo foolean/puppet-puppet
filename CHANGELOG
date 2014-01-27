@@ -1,5 +1,6 @@
-2014-01-25 - Bennett Samowich <bennett@foolean.org> - 0.2.4
+2014-01-26 - Bennett Samowich <bennett@foolean.org> - 0.2.4
 - Fixed RedHat passenger support
+- Cleaned up config.ru processing when using passenger
 
 2014-01-15 - Bennett Samowich <bennett@foolean.org> - 0.2.3
 - Fixed bootstrap code

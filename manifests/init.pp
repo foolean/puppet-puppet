@@ -373,17 +373,6 @@ class puppet (
         default  => false
     }
 
-    # Path to the packaged version of passenger's config.ru
-    $config_ru = $::operatingsystem ? {
-        'centos'   => '/usr/share/puppet/ext/rack/files/config.ru',
-        'debian'   => '/usr/share/puppet/rack/puppetmasterd/config.ru',
-        'fedora'   => '/usr/share/puppet/ext/rack/files/config.ru',
-        'opensuse' => '/usr/share/puppet/ext/rack/files/config.ru',
-        'redhat'   => '/usr/share/puppet/ext/rack/files/config.ru',
-        'ubuntu'   => '/usr/share/puppet/rack/puppetmasterd/config.ru',
-        default    => false,
-    }
-
     # Name of the Apache controler utility
     $apache2ctl = $::operatingsystem ? {
         'centos' => 'apachectl',
